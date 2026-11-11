@@ -76,12 +76,13 @@ async function start() {
   };
   const sync=()=>{ position(); if(visible())win.showInactive(); else win.hide(); send(); };
   const show=()=>{settings.enabled=true;save();sync();};
-  const hide=()=>{settings.enabled=false;save();sync();};
+  // 隐藏时一并同步 Harness 侧的「显示灵动岛」开关：告诉宿主把插件配置写成 enabled:false。
+  const hide=()=>{settings.enabled=false;save();sync();if(process.send)process.send({type:'hidden'});};
   const update=value=>{settings=normalizeSettings({...settings,...value});save();sync();};
   const applyPrefs=value=>{
     if(!value||typeof value!=='object')return;
     prefs={enabled:value.enabled!==false,popups:value.popups!==false,details:value.details!==false,balance:value.balance!==false,questions:value.questions!==false,approvals:value.approvals!==false,chat:value.chat!==false,hoverExpand:value.hoverExpand!==false};
-    settings=normalizeSettings({...settings,position:value.position,scale:SIZES[value.size]??1,motion:value.reduceMotion?'reduced':'full'});
+    settings=normalizeSettings({...settings,enabled:value.enabled!==false,position:value.position,scale:SIZES[value.size]??1,motion:value.reduceMotion?'reduced':'full'});
     save();sync();
   };
   const openHarness=()=>shell.openExternal('dsh://open').catch(()=>{});

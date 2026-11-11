@@ -158,6 +158,18 @@ export function apply(ctx, config = {}) {
     // 工作区注册表可能比插件晚一点就绪，启动后 4 秒补一次，避免顶部会话栏空等 20 秒。
     const hubBoot = setTimeout(() => hub.refresh(true).then(() => publish()), 4000); hubBoot.unref?.();
     const hubTimer = setInterval(() => hub.refresh().then(() => publish()), 20000); hubTimer.unref?.();
+    // 灵动岛隐藏时，把「显示灵动岛」写回插件配置，让设置页开关与岛的状态保持一致。
+    const setEnabledConfig = async enabled => {
+      const editor = ctx.get?.('configEditor');
+      if (!editor?.configuration || typeof editor.edit !== 'function') { hub.log('config sync unavailable'); return; }
+      try {
+        const rows = editor.configuration();
+        const row = rows.find(r => r.entry?.options?.id === 'dsh-island' || r.entry?.options?.name === 'dsh-island' || r.entry?.id === 'dsh-island');
+        if (!row) { hub.log('config sync entry not found', rows.length); return; }
+        await editor.edit(row.entry, current => ({ ...current, enabled }));
+        hub.log('config sync', enabled);
+      } catch (error) { hub.log('config sync failed', String(error?.message ?? error)); }
+    };
     // Settings edited in Harness arrive as volatile updates; forward them without restarting the window.
     let balanceAt = 0, balanceBusy = false;
     const refreshBalance = async (force = false) => {
@@ -185,6 +197,7 @@ export function apply(ctx, config = {}) {
       child.on('message',msg=>{
         if(msg?.type==='ready'){ last=''; message({ type: 'prefs', data: prefs }); send(); setTimeout(() => refreshBalance(prefs.balance), 3000).unref?.(); }
         if(msg?.type==='panel-open'){ refreshBalance(); hub.refresh(true).then(() => publish()); }
+        if(msg?.type==='hidden') setEnabledConfig(false);
         if(msg?.type==='balance') refreshBalance(true);
         // 工作区 / 会话：列表按需刷新，选中即成为灵动岛当前对话。
         if(msg?.type==='hub') hub.refresh(true).then(() => publish());
