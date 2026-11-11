@@ -14,9 +14,9 @@ export function windowBounds(work, settings, width = 440, height = 460) {
   const h = Math.min(work.height, Math.ceil(height * settings.scale));
   const edge = 4, p = settings.position;
   const x = p.includes('left') ? work.x + edge : p.includes('right') ? work.x + work.width - w - edge : work.x + (work.width - w) / 2;
-  // right-upper：胶囊对齐窗口顶部（见 island.css），窗口上移，使胶囊中心落在屏幕高度的上三分之一中点。
+  // right-upper：胶囊对齐窗口顶部（见 island.css），窗口上移，使胶囊中心落在屏幕高度的 1/3 处。
   const stripTop = 51; // 12px body padding + 78px 竖向待机胶囊的一半（CSS px，随 zoom 缩放）
-  const y = p === 'right-upper' ? work.y + work.height / 6 - stripTop * settings.scale
+  const y = p === 'right-upper' ? work.y + work.height / 3 - stripTop * settings.scale
     : p.startsWith('top') ? work.y + edge : p.startsWith('bottom') ? work.y + work.height - h - edge : work.y + (work.height - h) / 2;
   return { x: Math.round(Math.max(work.x, Math.min(x, work.x+work.width-w))), y: Math.round(Math.max(work.y, Math.min(y, work.y+work.height-h))), width: w, height: h };
 }
