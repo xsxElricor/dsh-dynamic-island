@@ -1,4 +1,4 @@
-param([ValidateSet('Install','Remove')][string]$Action='Install', [string]$DshCommand='D:/deepseek harness/resources/runtime/cli/bin/dsh.cmd')
+﻿param([ValidateSet('Install','Remove')][string]$Action='Install', [string]$DshCommand='D:/deepseek harness/resources/runtime/cli/bin/dsh.cmd')
 $ErrorActionPreference='Stop'
 if (Get-Process -Name 'DeepSeek Harness' -ErrorAction SilentlyContinue) { throw '请先从托盘退出 DeepSeek Harness，再安装或移除插件。' }
 if (-not (Test-Path -LiteralPath $DshCommand)) { throw '未找到 Harness 安装程序，请使用 -DshCommand 指定桌面端随附的 dsh.cmd。' }

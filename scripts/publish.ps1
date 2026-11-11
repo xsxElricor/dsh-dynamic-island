@@ -1,4 +1,4 @@
-# 一键发布到 GitHub（公开仓库 <你的用户名>/dsh-dynamic-island）。不发布 npm。
+﻿# 一键发布到 GitHub（公开仓库 <你的用户名>/dsh-dynamic-island）。不发布 npm。
 # 登录都在浏览器里完成，本脚本不读取、不保存任何密码或令牌。
 $ErrorActionPreference = 'Continue'
 try { [Console]::OutputEncoding = [Text.Encoding]::UTF8 } catch {}

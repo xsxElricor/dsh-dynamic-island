@@ -1,4 +1,4 @@
-param(
+﻿param(
   [string]$HarnessExe = ''
 )
 # 一键安装到本机 DeepSeek Harness：兼容检查 → 关闭 Harness（先询问）→ 安装当前版本 → 重新打开。

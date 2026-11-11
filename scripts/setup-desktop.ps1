@@ -1,4 +1,4 @@
-param(
+﻿param(
   [string]$DshCommand = '',
   [string]$HarnessExe = ''
 )
