@@ -80,6 +80,7 @@ try {
 
   Step '生成安装包并创建 Release'
   try {
+    New-Item -ItemType Directory -Force (Join-Path $root 'artifacts') | Out-Null
     npm run pack:plugin *> $null
     $tgz = Join-Path $root "artifacts/$pkgName-$version.tgz"
     if (Test-Path -LiteralPath $tgz) {
