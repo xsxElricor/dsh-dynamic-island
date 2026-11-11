@@ -46,7 +46,7 @@ test('old errors do not permanently obscure later work',()=>{
 });
 test('invalid preferences are normalized and all anchors fit negative-origin monitors',()=>{
   assert.deepEqual(normalizeSettings({position:'bad',scale:999,enabled:'yes',displayId:'1'}),{position:'top-center',scale:1,enabled:true,motion:'full',displayId:null});
-  for(const position of ['top-center','left-center','right-center','bottom-center','top-left','top-right'])for(const scale of [.85,1,1.15]){
+  for(const position of ['top-center','left-center','right-center','right-upper','bottom-center','top-left','top-right'])for(const scale of [.85,1,1.15]){
     const area={x:-1920,y:-200,width:1920,height:1040},b=windowBounds(area,{position,scale});
     assert.ok(b.x>=area.x&&b.y>=area.y&&b.x+b.width<=area.x+area.width&&b.y+b.height<=area.y+area.height);
   }

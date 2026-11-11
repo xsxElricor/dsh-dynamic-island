@@ -9,7 +9,7 @@ const drafts=new Map(),seenAsk=new Set(),seenApproval=new Map(),sentApproval=new
 // 出现时短暂"弹出"以示提醒；思考仅在新任务开始时弹出。
 const BURST={thinking:1700,waiting:3600,completed:3000,error:3800,paused:2200,offline:2600};
 const QUIET=['','idle','completed','paused','error','offline'];
-const VERTICAL=['left-center','right-center'];
+const VERTICAL=['left-center','right-center','right-upper'];
 
 const motionOn=()=>current.settings.motion!=='reduced'&&!matchMedia('(prefers-reduced-motion: reduce)').matches;
 const announceBounds=()=>{

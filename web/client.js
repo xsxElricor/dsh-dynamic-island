@@ -16,7 +16,7 @@ window.__ModuleLoader__.load({
 .dshi-intro{margin:0;color:var(--dsw-alias-label-secondary);font-size:13px;line-height:1.6}
 .dshi-card{border:.5px solid var(--dsw-alias-settings-card-stroke);border-radius:var(--dsw-radius-xl,14px);background:var(--dsw-alias-settings-card-fill);display:flex;flex-direction:column}
 .dshi-place{display:flex;gap:20px;align-items:center;padding:16px}
-.dshi-screen{position:relative;flex:none;width:232px;height:142px;border-radius:12px;overflow:hidden;
+.dshi-screen{position:relative;flex:none;width:232px;height:180px;border-radius:12px;overflow:hidden;
   background:linear-gradient(150deg,#dfe6ff 0%,#eceef5 50%,#f6e3dc 100%);border:.5px solid var(--dsw-alias-settings-card-stroke);box-shadow:inset 0 0 0 4px rgba(0,0,0,.04)}
 .dshi-taskbar{position:absolute;left:4px;right:4px;bottom:4px;height:10px;border-radius:0 0 8px 8px;background:rgba(20,24,40,.12)}
 .dshi-spot{position:absolute;display:grid;place-items:center;width:52px;height:24px;border:0;padding:0;border-radius:8px;background:transparent;cursor:pointer}
@@ -85,7 +85,7 @@ window.__ModuleLoader__.load({
 			reduceMotionHint: "关闭灵动岛的循环动画和弹性过渡。",
 			small: "小巧", medium: "适中", large: "舒展",
 			"top-left": "左上角", "top-center": "顶部居中", "top-right": "右上角",
-			"left-center": "左侧居中", "right-center": "右侧居中", "bottom-center": "底部居中",
+			"left-center": "左侧居中", "right-center": "右侧居中", "right-upper": "右上（上三分之一）", "bottom-center": "底部居中",
 			loading: "正在读取设置…",
 			unavailable: "灵动岛插件当前未加载，暂时无法设置。",
 			readOnly: "本部署的设置为只读。",
@@ -121,7 +121,7 @@ window.__ModuleLoader__.load({
 			reduceMotionHint: "Turn off looping animations and springy transitions.",
 			small: "Small", medium: "Medium", large: "Large",
 			"top-left": "Top left", "top-center": "Top center", "top-right": "Top right",
-			"left-center": "Left center", "right-center": "Right center", "bottom-center": "Bottom center",
+			"left-center": "Left center", "right-center": "Right center", "right-upper": "Right, upper third", "bottom-center": "Bottom center",
 			loading: "Loading settings…",
 			unavailable: "The island plugin is not loaded right now.",
 			readOnly: "Settings are read-only in this deployment.",
@@ -133,7 +133,8 @@ window.__ModuleLoader__.load({
 		const DEFAULTS = { enabled: true, position: "top-center", size: "medium", reduceMotion: false, popups: true, details: true, balance: true, questions: true, approvals: true, chat: true, hoverExpand: true, sessions: true };
 		const SPOTS = [
 			["top-left", { left: 6, top: 6 }], ["top-center", { left: 90, top: 6 }], ["top-right", { right: 6, top: 6 }],
-			["left-center", { left: 6, top: 45 }, true], ["right-center", { right: 6, top: 45 }, true], ["bottom-center", { left: 90, bottom: 16 }]
+			["left-center", { left: 6, top: 64 }, true], ["right-upper", { right: 6, top: 34 }, true],
+			["right-center", { right: 6, top: 100 }, true], ["bottom-center", { left: 90, bottom: 12 }]
 		];
 
 		function Switch({ checked, label, disabled, onChange }) {

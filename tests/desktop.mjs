@@ -26,10 +26,10 @@ try{
   assert.ok(panelFits,'expanded panel is not clipped');
   // Position, size and motion come from Harness settings; the preview drives the same window through its bridge.
   const settings=value=>page.evaluate(v=>window.island.settings(v),value);
-  for(const position of ['left-center','right-center','bottom-center','top-center']){
+  for(const position of ['left-center','right-center','right-upper','bottom-center','top-center']){
     await settings({position});await page.waitForTimeout(800);
     assert.equal(await page.locator('body').getAttribute('data-position'),position);
-    assert.equal(await page.locator('#island').getAttribute('data-layout'),['left-center','right-center'].includes(position)?'v':'h');
+    assert.equal(await page.locator('#island').getAttribute('data-layout'),['left-center','right-center','right-upper'].includes(position)?'v':'h');
     const box=await page.locator('#island').boundingBox(),size=await page.evaluate(()=>({w:innerWidth,h:innerHeight}));
     assert.ok(box.x>=0&&box.y>=0&&box.x+box.width<=size.w+1&&box.y+box.height<=size.h+1,`${position} stays visible`);
   }

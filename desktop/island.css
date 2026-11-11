@@ -23,6 +23,7 @@ body[data-position="top-right"]{justify-content:flex-end}
 body[data-position="bottom-center"]{align-items:flex-end;--enter-y:14px}
 body[data-position="left-center"]{align-items:center;justify-content:flex-start;--enter-x:-14px;--enter-y:0px}
 body[data-position="right-center"]{align-items:center;justify-content:flex-end;--enter-x:14px;--enter-y:0px}
+body[data-position="right-upper"]{align-items:flex-start;justify-content:flex-end;--enter-x:14px;--enter-y:0px}
 button,select,input{font:inherit;color:inherit}
 button{border:0;background:none;cursor:pointer;padding:0;transition:background-color .2s,color .2s,transform .25s var(--smooth),opacity .2s}
 button:focus-visible,select:focus-visible,input:focus-visible+.switch{outline:2px solid var(--ds-blue-hi);outline-offset:2px}
