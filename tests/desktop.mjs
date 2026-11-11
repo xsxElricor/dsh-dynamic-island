@@ -79,6 +79,7 @@ try{
   await page.click('#stats-range [data-range="7d"]');await page.waitForTimeout(400);
   assert.equal(await page.locator('#stats-range [data-range="7d"]').getAttribute('aria-selected'),'true');
   assert.notEqual(await page.locator('#stats-tokens').textContent(),'–');
+  assert.equal(await page.locator('#stats-chart i').count(),7,'the chart follows the selected range');
   await page.screenshot({path:'artifacts/qa/stats.png'});
   await page.click('#stats');await page.waitForTimeout(300);
   assert.equal(await page.locator('#statsview').isVisible(),false,'a second click returns to the conversation panel');

@@ -67,6 +67,10 @@
             <div class="stats-tile"><strong id="stats-cache">–</strong><span>缓存命中</span></div>
             <div class="stats-tile"><strong id="stats-turns">–</strong><span>完成/轮次</span></div>
           </div>
+          <div class="stats-chart-wrap">
+            <div id="stats-chart" class="stats-chart" aria-hidden="true"></div>
+            <div class="stats-axis"><span id="stats-axis-from"></span><span id="stats-axis-to"></span></div>
+          </div>
           <div class="stats-rows">
             <div class="stats-row"><span>当前上下文</span><b id="stats-context">–</b></div>
             <div class="stats-row"><span>账户余额</span><b id="stats-balance">–</b></div>
@@ -113,12 +117,6 @@
         <div id="others" class="group" hidden>
           <div class="group-head">其他任务</div>
           <ul id="other-list" class="rows"></ul>
-        </div>
-
-        <div id="today" class="today" hidden>
-          <div class="tile"><strong id="today-count" class="num">0</strong><span>今天完成</span></div>
-          <div class="tile"><strong id="today-time" class="num">0 分钟</strong><span>工作时长</span></div>
-          <div id="third-tile" class="tile"><strong id="third-value" class="num">0</strong><span id="third-label">今日 tokens</span></div>
         </div>
 
         <div id="recent" class="group" hidden>

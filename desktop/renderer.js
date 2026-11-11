@@ -106,7 +106,6 @@ const TOOL_LABELS={read:'读取文件',read_image:'查看图片',write:'写入�
   session_search:'搜索会话',create_goal:'设定目标',update_goal:'更新目标',working_directory:'切换目录',load_workspace_dependencies:'读取依赖'};
 const toolLabel=name=>TOOL_LABELS[name]??TOOL_LABELS[String(name).replace(/^mcp__[^_]+__/,'')]??String(name).replace(/^mcp__/,'').replace(/_/g,' ');
 const tokens=n=>!n?'0':n<1000?String(n):n<1e6?`${(n/1000).toFixed(n<1e4?1:0)}K`:`${(n/1e6).toFixed(1)}M`;
-const duration=ms=>{const m=Math.round(ms/60000);return m<1?'不到 1 分钟':m<60?`${m} 分钟`:`${Math.floor(m/60)} 小时 ${m%60} 分`;};
 const short=ms=>{const s=Math.max(0,Math.round(ms/1000));return s<60?`${s} 秒`:`${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`;};
 const ago=t=>{const m=Math.floor((Date.now()-t)/60000);return m<1?'刚刚':m<60?`${m} 分钟前`:m<1440?`${Math.floor(m/60)} 小时前`:`${Math.floor(m/1440)} 天前`;};
 const TINT={thinking:'#6a86ff',streaming:'#4f8dff',tools:'#7a7cff',waiting:'#f5b544',completed:'#3ddc91',paused:'#9aa3b8',error:'#ff6b6b',reconnecting:'#f2b45a',compacting:'#9b8cff',offline:'#6b7385'};
@@ -260,7 +259,7 @@ function renderRing(state,d){
 }
 
 // 展开面板：进行中显示当前任务卡和其他任务，空闲时显示今天的统计和最近完成。
-function renderPanel({activity:a,prefs={},history={},balance,preview}){
+function renderPanel({activity:a,prefs={},history={},preview}){
   const state=Object.hasOwn(STATES,a.state)?a.state:'offline',details=prefs.details!==false;
   const idle=state==='idle'||state==='offline',d=a.detail||{};
   $('task').hidden=idle;
@@ -287,19 +286,6 @@ function renderPanel({activity:a,prefs={},history={},balance,preview}){
     $('recent-list').replaceChildren(...recent.map(r=>li(TINT[r.state],[['ok',r.state==='completed'?'✓':r.state==='error'?'!':'‖'],['t',details&&r.title?r.title:'已结束的任务'],['s',`${short(r.ended-r.started)} · ${ago(r.ended)}`]])));
   }
   $('others').hidden=idle||!others.length;
-  const t=history.today||{};
-  $('today').hidden=!idle;
-  $('today-count').textContent=String(t.count||0);$('today-time').textContent=duration(t.ms||0);
-  // 主面板的余额格子尊重「显示账户余额」；统计视图里的余额始终显示。
-  const wallet=(prefs.balance===false?null:balance)?.wallets?.find(w=>w.currency==='CNY')??(prefs.balance===false?null:balance)?.wallets?.[0];
-  $('third-tile').classList.toggle('money',!!wallet);
-  if(wallet){
-    const bonus=(balance.bonus||[]).filter(w=>w.currency===wallet.currency).reduce((n,w)=>n+Number(w.balance),0);
-    const sign=wallet.currency==='USD'?'$':'¥';
-    $('third-value').replaceChildren(document.createTextNode(sign+Number(wallet.balance).toFixed(2)));
-    $('third-label').textContent=bonus>0?`余额 · 赠 ${sign}${bonus.toFixed(2)}`:'账户余额';
-    $('third-tile').title=bonus>0?`另有赠送余额 ${sign}${bonus.toFixed(2)}`:'';
-  }else{$('third-value').textContent=tokens(t.tokens||0);$('third-label').textContent='今日 tokens';}
   $('recent').hidden=!(idle||['completed','paused','error'].includes(state))||!recent.length;
   $('hint').hidden=!idle||preview;
   $('stop').hidden=!a.stoppable;if(!a.stoppable)disarm();
@@ -310,7 +296,7 @@ function renderPanel({activity:a,prefs={},history={},balance,preview}){
   if(approving)$('ask').hidden=true;
   const asking=!approving&&renderAsk();
   const chatting=renderChat();
-  if(approving||asking)for(const id of ['task','others','today','recent','hint','reply','chat'])$(id).hidden=true;
+  if(approving||asking)for(const id of ['task','others','recent','hint','reply','chat'])$(id).hidden=true;
   // 对话卡里已经有最近的回复；空闲时收起最近任务，给输入框留出位置。
   else if(chatting){$('reply').hidden=true;if(idle)for(const id of ['recent','hint'])$(id).hidden=true;}
 }
@@ -398,6 +384,29 @@ function renderStats(){
   const peak=isPeak(Date.now());
   $('stats-period').textContent=peak?'高峰':'空闲（谷）';
   $('stats-period').dataset.peak=String(peak);
+  if(d?.buckets?.length)renderStatsChart(d);
+  else{$('stats-chart').replaceChildren();$('stats-chart').dataset.key='';$('stats-axis-from').textContent='';$('stats-axis-to').textContent='';}
+}
+// 柱状图：与 2×2 表格同一个范围；每根柱子按「缓存命中 / 未命中输入 / 输出」堆叠。
+function renderStatsChart(d){
+  const buckets=d.buckets||[];
+  const key=buckets.map(b=>`${b.start}:${b.cacheRead}:${b.input}:${b.output}`).join('|');
+  if($('stats-chart').dataset.key===key)return;
+  $('stats-chart').dataset.key=key;
+  const max=Math.max(1,...buckets.map(b=>b.cacheRead+b.input+b.output));
+  $('stats-chart').replaceChildren(...buckets.map(b=>{
+    const total=b.cacheRead+b.input+b.output,col=document.createElement('i');
+    col.title=`${b.label} · ${tokens(total)} tokens${b.cost>=0.005?` · ¥${b.cost.toFixed(2)}`:''}`;
+    if(!total){col.className='zero';return col;}
+    col.style.height=`${Math.max(8,Math.round(total/max*100))}%`;
+    for(const [cls,value] of [['cache',b.cacheRead],['in',b.input],['out',b.output]]){
+      if(!value)continue;
+      const seg=document.createElement('b');seg.className=cls;seg.style.height=`${value/total*100}%`;col.append(seg);
+    }
+    return col;
+  }));
+  $('stats-axis-from').textContent=buckets[0]?.label??'';
+  $('stats-axis-to').textContent=d.byHour?'现在':(buckets.at(-1)?.label??'');
 }
 $('stats-back').addEventListener('click',closeStats);
 $('stats-range').addEventListener('click',event=>{const b=event.target.closest('[data-range]');if(b)openStats(b.dataset.range);});
