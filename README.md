@@ -6,7 +6,7 @@ DeepSeek Harness 的桌面灵动岛插件：像 iPhone 灵动岛一样停在屏�
 >
 > 本插件基于 [a961282799-crypto/dsh-island](https://github.com/a961282799-crypto/dsh-island)（MIT）衍生，原作者与贡献者的版权保留；本仓库的改动版权归 xsxElricor。
 
-## 0.1.0 首发（基于上游 0.6.2）
+## 0.1 首发（基于上游 0.6.2）
 
 - 展开面板顶部新增工作区/会话切换：左键选工作区，中键选该工作区最近的对话，右键在该工作区新建对话（默认标准模式）。
 - 审批卡显示「允许本次操作使用 <模式> 权限」和目的，与 Harness 主窗口一致。
@@ -48,8 +48,8 @@ DeepSeek Harness 的桌面灵动岛插件：像 iPhone 灵动岛一样停在屏�
   powershell -NoProfile -ExecutionPolicy Bypass -File scripts/install-harness.ps1
   ```
 
-  脚本会在 `artifacts/` 下生成 `dsh-dynamic-island-0.1.0.tgz`，再用 Harness 随附的 `dsh plugin --profile desktop add` 安装。
-- **已打包的 tgz**：也可以直接运行 `dsh plugin --profile desktop add artifacts\dsh-dynamic-island-0.1.0.tgz`。
+  脚本会在 `artifacts/` 下生成 `dsh-dynamic-island-0.1.1.tgz`，再用 Harness 随附的 `dsh plugin --profile desktop add` 安装。
+- **已打包的 tgz**：也可以直接运行 `dsh plugin --profile desktop add artifacts\dsh-dynamic-island-0.1.1.tgz`。
 
 装好后，位置、大小等选项在 Harness 的「设置 › 灵动岛」中调整。
 
