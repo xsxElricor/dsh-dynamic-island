@@ -31,6 +31,7 @@ export class SessionHub {
     this.version = 0;
     this.busy = null;
     this.note = '';
+    this.ready = false;
   }
 
   get enabled() { return this.prefs?.sessions !== false; }
@@ -79,6 +80,12 @@ export class SessionHub {
         .filter(s => s?.sessionId && s.origin !== 'subagent')
         .map(s => ({ id: String(s.sessionId), at: Number(s.updatedAt) || 0, running: Boolean(s.running), blank: Boolean(s.blank), cwd: typeof s.cwd === 'string' ? s.cwd : '' }));
       this.summaries = summaries;
+      // 首次加载时让恢复的对话和工作区保持一致：上次选中的对话属于哪个工作区，就回到那个工作区。
+      if (!this.ready) {
+        this.ready = true;
+        const owner = this.sessionId ? this.ownerOf(this.sessionId) : null;
+        if (owner) this.workspaceId = owner.id;
+      }
       const ids = summaries.slice(0, TITLE_CACHE).map(s => s.id);
       if (query?.readTitleSnapshots && ids.length) {
         const results = await query.readTitleSnapshots(ids).catch(() => []);
@@ -138,6 +145,12 @@ export class SessionHub {
   countIn(workspace) {
     const sameCwd = normalize(workspace.path);
     return this.summaries.filter(s => !s.blank && (workspace.members.has(s.id) || (sameCwd && normalize(s.cwd) === sameCwd))).length;
+  }
+
+  ownerOf(sessionId) {
+    if (!sessionId) return null;
+    const record = this.summaries.find(s => s.id === sessionId);
+    return this.workspaces.find(w => w.members.has(sessionId) || (record?.cwd && w.path && normalize(w.path) === normalize(record.cwd))) ?? null;
   }
 
   #save() {
