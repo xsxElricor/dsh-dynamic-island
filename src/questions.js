@@ -56,7 +56,7 @@ export class QuestionDesk {
    * @param onChange - called whenever the set of answerable questions changes.
    */
   constructor(ctx, onChange = () => {}, log = () => {}) {
-    this.ctx = ctx; this.onChange = onChange; this.log = log; this.open = new Map(); this.enabled = true; this.answered = new Map();
+    this.ctx = ctx; this.onChange = onChange; this.log = log; this.open = new Map(); this.enabled = true; this.answered = new Map(); this.pendingReviews = new Map();
   }
   /** Join the answerer waterfall ahead of Harness's own UI. @returns the listener disposer. */
   attach() {
@@ -68,7 +68,20 @@ export class QuestionDesk {
     const signal = request?.signal;
     this.log('request', { enabled: this.enabled, timed: request?.wait?.timed === true, wait: Boolean(request?.wait), agent: Boolean(request?.agent?.session), count: request?.questions?.length ?? 0, answerable: answerable(request?.questions) });
     // timed 和 legacy（无 timeout）两种提问都接：timed 用工具给的 callId，legacy 分配一个临时 id。
-    if (!this.enabled || !request?.agent?.session || !answerable(request.questions) || signal?.aborted) return next();
+    if (!this.enabled || !request?.agent?.session || !answerable(request.questions) || signal?.aborted) {
+      // 计划审阅带 intent + 整篇计划，灵动岛不呈现选项，只登记为「待审阅」，由 Harness 显示全文。
+      if (this.enabled && request?.agent?.session && !signal?.aborted && (request.questions ?? []).some(q => q?.intent?.kind === 'plan-review')) {
+        const reviewId = callId ?? `review-${randomUUID()}`;
+        this.pendingReviews.set(reviewId, { callId: reviewId, sessionId: request.agent.session.id, at: Date.now() });
+        this.onChange();
+        const drop = () => { if (this.pendingReviews.delete(reviewId)) this.onChange(); };
+        let downstream;
+        try { downstream = Promise.resolve(next()); } catch (error) { downstream = Promise.reject(error); }
+        downstream.then(drop, drop);
+        return downstream;
+      }
+      return next();
+    }
     // 换成一个「原信号 或 灵动岛已作答」的组合信号：灵动岛先答时撤销它，Harness 网页端的提问卡随之撤下。
     const retire = new AbortController();
     const combined = signal ? AbortSignal.any([signal, retire.signal]) : retire.signal;
@@ -108,6 +121,10 @@ export class QuestionDesk {
       }
     }
     return rows.slice(0, 4);
+  }
+  /** Plan-review questions waiting for the user in Harness (not answerable in the island). */
+  reviews() {
+    return [...this.pendingReviews.values()];
   }
   /**
    * Answer one question batch from the island.

@@ -412,6 +412,9 @@ select{border:1px solid rgba(255,255,255,.1);border-radius:7px;background:#151b2
 .stats-row b{font-weight:600;color:#dfe5f6;font-variant-numeric:tabular-nums;text-align:right;max-width:70%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .stats-note{margin:0;font-size:10px;color:var(--faint);line-height:1.4}
 .icon-button[data-active="true"]{color:var(--ds-blue-soft)}
+.island[data-alert="plan"]{--tint:#f5b544}
+.island[data-alert="plan"]::before{opacity:.85;animation:halo-strong 2.2s ease-in-out infinite}
+.plan-hint{margin:0;padding:8px 10px;border-radius:10px;background:rgba(245,181,68,.08);border:1px solid rgba(245,181,68,.18);font-size:11px;line-height:1.45;color:#f2cf8e}
 
 /* ---------- 减少动效 ---------- */
 body[data-motion="reduced"] *,body[data-motion="reduced"] *::before,body[data-motion="reduced"] *::after{animation:none!important;transition-duration:.08s!important;transition-delay:0s!important}

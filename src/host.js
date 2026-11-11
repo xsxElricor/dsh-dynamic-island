@@ -63,6 +63,8 @@ export function islandSnapshot(ctx, store, known, desk, extra = {}) {
   const data = store.snapshot(id => known.size === 0 || known.has(id), focus);
   const title = id => store.sessions.get(id)?.title ?? '';
   data.questions = desk ? desk.list(roots).map(q => ({ ...q, title: title(q.sessionId) })) : [];
+  // 计划审阅（plan-review）只在 Harness 里显示全文；灵动岛只提示「有一份计划待审阅」。
+  data.planReview = desk ? { count: desk.reviews().length } : null;
   data.approvals = extra.approvals ? extra.approvals.list().map(a => ({ ...a, title: title(a.sessionId) })) : [];
   data.stoppable = Boolean(data.sessionId && !['completed','paused','error','idle'].includes(data.state) && roots.some(a => a?.session?.id === data.sessionId));
   if (data.detail) {

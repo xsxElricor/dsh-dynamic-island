@@ -4,7 +4,7 @@ import {isPeak} from '../src/pricing.js';
 const $=id=>document.getElementById(id);
 const island=$('island'),stage=$('stage'),bridge=window.island;
 let current={activity:{state:'idle'},settings:{position:'top-center',scale:1,motion:'full'}};
-let expanded=false,peek=false,burstUntil=0,lastState='',boundsFrame,burstTimer,peekTimer,leaveTimer,armTimer,hoverTimer,listKey='',autoOpened=false,hoverOpened=false,lastReply='',hubMode=null,statsOpen=false,statsRange='today',statsData=null;
+let expanded=false,peek=false,burstUntil=0,lastState='',boundsFrame,burstTimer,peekTimer,leaveTimer,armTimer,hoverTimer,listKey='',autoOpened=false,hoverOpened=false,lastReply='',lastReview=false,hubMode=null,statsOpen=false,statsRange='today',statsData=null;
 const drafts=new Map(),seenAsk=new Set(),seenApproval=new Map(),sentApproval=new Map();
 
 // 出现时短暂"弹出"以示提醒；思考仅在新任务开始时弹出。
@@ -296,6 +296,8 @@ function renderPanel({activity:a,prefs={},history={},preview}){
   if(approving)$('ask').hidden=true;
   const asking=!approving&&renderAsk();
   const chatting=renderChat();
+  // 计划审阅只在 Harness 里看全文；面板里留一行轻量提示，批准入口沿用底部的「打开 Harness」。
+  $('plan-hint').hidden=!(a.planReview?.count)||approving||asking;
   if(approving||asking)for(const id of ['task','others','recent','hint','reply','chat'])$(id).hidden=true;
   // 对话卡里已经有最近的回复；空闲时收起最近任务，给输入框留出位置。
   else if(chatting){$('reply').hidden=true;if(idle)for(const id of ['recent','hint'])$(id).hidden=true;}
@@ -431,14 +433,17 @@ function render(snapshot){
   $('status-label').textContent=copy.label;
   const details=snapshot.prefs?.details!==false;
   const ask=askOf(),approval=approvalOf(),reply=details&&state==='completed'?a.detail?.reply:'';
+  const review=Boolean(a.planReview&&a.planReview.count>0);
   if(ask&&state==='waiting')$('status-label').textContent='有问题等你回答';
   if(approval)$('status-label').textContent='需要你批准';
   else if(reply)$('status-label').textContent='有新回复';
+  else if(review)$('status-label').textContent='计划待审阅';
   $('mini-note').textContent=approval&&!expanded?(details&&approval.detail?.text?approval.detail.text:toolLabel(approval.toolName))
     :ask&&state==='waiting'&&!expanded?ask.questions[0].question
     :reply&&!expanded?reply
+    :review&&!expanded?'有一份计划待你审阅 · 在 Harness 中查看'
     :state==='idle'?(preview?'动画预览':'DeepSeek Harness'):details&&a.title?a.title:copy.detail;
-  island.dataset.alert=approval?'approval':reply?'reply':'';
+  island.dataset.alert=approval?'approval':reply?'reply':review?'plan':'';
   renderRing(state,a.detail);
   $('badge').hidden=!(a.activeCount>1);$('badge').textContent=a.activeCount>1?String(a.activeCount):'';
   $('demo-controls').hidden=!preview;$('demo-state').value=state;
@@ -451,8 +456,10 @@ function render(snapshot){
   const prompt=approval?'approval:'+approval.id:ask?'ask:'+ask.callId:'';
   if(prompt&&!seenAsk.has(prompt)){seenAsk.add(prompt);if(snapshot.prefs?.popups!==false&&!expanded){autoOpened=true;expand(true);}}
   if(!prompt&&autoOpened){autoOpened=false;if(expanded)expand(false);}
-  // 新回复：完成时在胶囊里预览回复开头，并多停留一会儿。
+  // 新回复：完成时在胶囊里预览回复开头，并多停留一会儿；计划审阅出现时也轻量弹出一次。
   if(reply&&reply!==lastReply&&lastState===state&&!expanded&&snapshot.prefs?.popups!==false)burst(4200);
+  if(review&&!lastReview&&!expanded&&snapshot.prefs?.popups!==false)burst(4200);
+  lastReview=review;
   lastReply=reply||'';
   if(lastState!==state){
     const prev=lastState;lastState=state;

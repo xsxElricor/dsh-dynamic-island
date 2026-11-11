@@ -59,6 +59,28 @@ test('plan reviews, questions with details, untimed asks and a disabled desk pas
   assert.equal(reached,3);assert.equal(desk.list([]).length,0);
 });
 
+test('plan reviews are tracked as pending hints but never become island cards',async()=>{
+  const ctx=fakeCtx();const desk=new QuestionDesk(ctx);desk.attach();let release,reached=0;
+  ctx.on('user-questions/request',()=>{reached++;return new Promise(r=>{release=r;});});
+  const plan=[{id:'q',question:'批准计划？',detail:'# 计划',intent:{kind:'plan-review',approve:'批准'},options:[{label:'批准'}]}];
+  const pending=ctx.waterfall('user-questions/request',timedRequest(agent('a'),new AbortController().signal,'p',plan),()=>0);
+  assert.equal(reached,1,'Harness still receives the question');
+  assert.equal(desk.list([]).length,0,'plan reviews never become answerable island cards');
+  assert.equal(desk.reviews().length,1,'the pending review is tracked for the hint');
+  release({answers:[]});
+  await pending;await Promise.resolve();await Promise.resolve();
+  assert.equal(desk.reviews().length,0,'settling clears the hint');
+});
+
+test('approval-intent questions pass through without a review hint',async()=>{
+  const ctx=fakeCtx();const desk=new QuestionDesk(ctx);desk.attach();
+  ctx.on('user-questions/request',()=>Promise.resolve({answers:[]}));
+  const q=[{id:'a',question:'允许？',options:[{label:'允许'}],intent:{kind:'approval',approve:'允许',reject:'拒绝'}}];
+  await ctx.waterfall('user-questions/request',timedRequest(agent('s'),new AbortController().signal,'a1',q),()=>0);
+  assert.equal(desk.reviews().length,0);
+  assert.equal(desk.list([]).length,0);
+});
+
 test('answers are checked against the question batch',()=>{
   const qs=normalizeQuestions(Q);
   assert.equal(validateAnswers(qs,[{id:'q1',selected:['Vitest']}]),null,'missing question');
