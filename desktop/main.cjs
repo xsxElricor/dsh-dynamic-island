@@ -106,8 +106,7 @@ async function start() {
     ]:[{label:'位置与大小：Harness 设置 › 灵动岛',click:openHarness}]),
     {type:'separator'},
     {label:'用量统计',click:openStats},
-    {label:'打开 DeepSeek Harness',click:openHarness},
-    {label:'退出灵动岛',click:()=>app.quit()}
+    {label:'打开 DeepSeek Harness',click:openHarness}
   ]);
   await app.whenReady();
   win=new BrowserWindow({width:WIDTH,height:HEIGHT,show:false,frame:false,transparent:true,backgroundColor:'#00000000',hasShadow:false,alwaysOnTop:true,skipTaskbar:true,resizable:false,maximizable:false,minimizable:false,fullscreenable:false,title:'DeepSeek 灵动岛',webPreferences:{preload:path.join(__dirname,'preload.cjs'),contextIsolation:true,nodeIntegration:false,sandbox:true,backgroundThrottling:true}});
