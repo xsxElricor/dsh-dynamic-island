@@ -6,7 +6,7 @@ $islandPackage = Get-Content -LiteralPath (Join-Path $PSScriptRoot '../package.j
 if ($Action -eq 'Remove') {
   & $DshCommand plugin --profile desktop remove $islandPackage.name
 } else {
-  $islandArchive = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot "../artifacts/dsh-island-$($islandPackage.version).tgz")).Path
+  $islandArchive = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot "../artifacts/dsh-dynamic-island-$($islandPackage.version).tgz")).Path
   & $DshCommand plugin --profile desktop add $islandArchive
 }
 if ($LASTEXITCODE -ne 0) { throw "操作失败，退出码 $LASTEXITCODE" }

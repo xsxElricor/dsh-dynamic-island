@@ -13,7 +13,7 @@ import { ChatDesk } from './chat.js';
 import { SessionHub } from './hub.js';
 
 export { Config };
-export const name = 'dsh-island';
+export const name = 'dsh-dynamic-island';
 export const inject = ['agents'];
 
 const rootsOf = ctx => { try { return typeof ctx.agents.roots === 'function' ? ctx.agents.roots() : ctx.agents.list(); } catch { return []; } };
@@ -112,7 +112,7 @@ export function apply(ctx, config = {}) {
     let child, last = '', stopped = false, pending, prefs = readPrefs(config);
     const store = new ActivityStore(), known = new Set();
     const env={...process.env}; delete env.ELECTRON_RUN_AS_NODE;
-    const dataDir = read('dataDir') || join(env.DSH_HOME || join(homedir(),'.dsh'),'dsh-island');
+    const dataDir = read('dataDir') || join(env.DSH_HOME || join(homedir(),'.dsh'),'dsh-dynamic-island');
     const desk = new QuestionDesk(ctx, () => publish(), (...args) => hub.log('ask', ...args));
     desk.enabled = prefs.questions;
     const offDesk = desk.attach();
@@ -164,7 +164,7 @@ export function apply(ctx, config = {}) {
       if (!editor?.configuration || typeof editor.edit !== 'function') { hub.log('config sync unavailable'); return; }
       try {
         const rows = editor.configuration();
-        const row = rows.find(r => r.entry?.options?.id === 'dsh-island' || r.entry?.options?.name === 'dsh-island' || r.entry?.id === 'dsh-island');
+        const row = rows.find(r => r.entry?.options?.id === 'dsh-dynamic-island' || r.entry?.options?.name === 'dsh-dynamic-island' || r.entry?.id === 'dsh-dynamic-island');
         if (!row) { hub.log('config sync entry not found', rows.length); return; }
         await editor.edit(row.entry, current => ({ ...current, enabled }));
         hub.log('config sync', enabled);

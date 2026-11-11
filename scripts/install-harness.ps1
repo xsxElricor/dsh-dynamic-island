@@ -1,4 +1,4 @@
-﻿param(
+param(
   [string]$HarnessExe = ''
 )
 # 一键安装到本机 DeepSeek Harness：兼容检查 → 关闭 Harness（先询问）→ 安装当前版本 → 重新打开。
@@ -9,7 +9,7 @@ Add-Type -AssemblyName PresentationFramework
 $root = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..')).Path
 $pkg = Get-Content -LiteralPath (Join-Path $root 'package.json') -Raw -Encoding UTF8 | ConvertFrom-Json
 $info = @{
-  'dsh-island'      = @{ Title = 'DeepSeek 灵动岛'; Hint = '灵动岛会出现在屏幕上。位置、大小和提醒方式在 Harness 的「设置 › 灵动岛」中调整。' }
+  'dsh-dynamic-island' = @{ Title = 'DeepSeek 灵动岛'; Hint = '灵动岛会出现在屏幕上。位置、大小和提醒方式在 Harness 的「设置 › 灵动岛」中调整。' }
   'dsh-timeband'    = @{ Title = 'DSH TimeBand';   Hint = '侧栏底部头像右侧会显示峰谷时段，点击查看今日时间轴。'; Replaces = @('@a961282799/dsh-timeband') }
   'dsh-region-edit' = @{ Title = '圈选修改';       Hint = '在文件预览里即可点选或圈选要修改的区域。' }
 }[$pkg.name]

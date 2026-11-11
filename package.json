@@ -1,7 +1,7 @@
 {
-  "name": "dsh-island",
-  "version": "0.7.0",
-  "description": "DeepSeek Harness 桌面灵动岛插件：实时任务状态、上下文占用、在灵动岛批准权限与回答提问、用量与费用统计（社区插件）",
+  "name": "dsh-dynamic-island",
+  "version": "0.1.0",
+  "description": "DeepSeek Harness 桌面灵动岛插件：实时任务状态、上下文占用、审批与提问、工作区/会话切换、面板内用量统计（dsh-island 衍生版）",
   "type": "module",
   "license": "MIT",
   "main": "src/host.js",
@@ -26,7 +26,8 @@
     "deepseek",
     "desktop",
     "dynamic-island",
-    "electron"
+    "electron",
+    "dsh-dynamic-island"
   ],
   "engines": {
     "node": ">=22"
@@ -65,13 +66,13 @@
     "preview": "node scripts/preview.mjs",
     "pack:plugin": "npm pack --pack-destination artifacts --ignore-scripts"
   },
-  "author": "a961282799-crypto",
+  "author": "xsxElricor",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/a961282799-crypto/dsh-island.git"
+    "url": "git+https://github.com/xsxElricor/dsh-dynamic-island.git"
   },
-  "homepage": "https://github.com/a961282799-crypto/dsh-island#readme",
+  "homepage": "https://github.com/xsxElricor/dsh-dynamic-island#readme",
   "bugs": {
-    "url": "https://github.com/a961282799-crypto/dsh-island/issues"
+    "url": "https://github.com/xsxElricor/dsh-dynamic-island/issues"
   }
 }

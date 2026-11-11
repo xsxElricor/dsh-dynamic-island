@@ -4,7 +4,7 @@ const path = require('node:path');
 const { pathToFileURL } = require('node:url');
 const demo = process.argv.includes('--preview');
 const dataArg = process.argv.find(v=>v.startsWith('--island-data='));
-const dataDir = dataArg ? dataArg.slice('--island-data='.length) : path.join(app.getPath('userData'),'dsh-island');
+const dataDir = dataArg ? dataArg.slice('--island-data='.length) : path.join(app.getPath('userData'),'dsh-dynamic-island');
 app.setPath('userData',dataDir);
 app.setName('DeepSeek Island');
 const single = app.requestSingleInstanceLock();

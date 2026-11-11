@@ -1,8 +1,8 @@
 // DeepSeek Island — Harness「设置 › 灵动岛」页面（浏览器半侧）。
-// 由 Harness 的模块系统按 package.json 的 dsh.client 声明加载；读写宿主条目 "dsh-island" 的 volatile 配置，
+// 由 Harness 的模块系统按 package.json 的 dsh.client 声明加载；读写宿主条目 "dsh-dynamic-island" 的 volatile 配置，
 // 保存后宿主即时转发给桌面上的灵动岛，无需重启。
 window.__ModuleLoader__.load({
-	id: "dsh-island",
+	id: "dsh-dynamic-island",
 	factory: (require) => {
 		var module = { exports: {} };
 		var exports = module.exports;
@@ -46,10 +46,10 @@ window.__ModuleLoader__.load({
 .dshi-note{margin:0;font-size:12px;color:var(--dsw-alias-label-tertiary)}
 .dshi-note.warn{color:var(--dsw-alias-state-warn-label, #b7791f)}
 `;
-		const tagId = "dsh-island/settings.css";
+		const tagId = "dsh-dynamic-island/settings.css";
 		if (typeof document !== "undefined" && document.querySelector("style[data-plugin-css=" + JSON.stringify(tagId) + "]") === null) {
 			const tag = document.createElement("style");
-			tag.dataset.plugin = "dsh-island";
+			tag.dataset.plugin = "dsh-dynamic-island";
 			tag.dataset.pluginCss = tagId;
 			tag.textContent = css;
 			document.head.appendChild(tag);
@@ -128,7 +128,7 @@ window.__ModuleLoader__.load({
 			failed: "Harness did not accept the change; the previous value was kept."
 		};
 
-		const ENTRY = "dsh-island";
+		const ENTRY = "dsh-dynamic-island";
 		const NS = "settings.dshIsland";
 		const DEFAULTS = { enabled: true, position: "top-center", size: "medium", reduceMotion: false, popups: true, details: true, balance: true, questions: true, approvals: true, chat: true, hoverExpand: true, sessions: true };
 		const SPOTS = [
@@ -196,18 +196,18 @@ window.__ModuleLoader__.load({
 		const inject = ["slots", "locale", "configForms"];
 		function apply(ctx) {
 			const t = ctx.locale.bind(NS);
-			ctx.effect(() => ctx.locale.register(NS, { zh, en }), "dsh-island: dictionaries");
+			ctx.effect(() => ctx.locale.register(NS, { zh, en }), "dsh-dynamic-island: dictionaries");
 			const form = ctx.configForms.get(ENTRY);
 			// 与继承值相同的选择清除覆盖，让默认值继续生效。
 			const write = (key, next, inherited) => next === inherited ? form.unset(key) : form.set(key, next);
 			ctx.effect(() => ctx.configForms.whileServed([ENTRY], () => ctx.slots.inject("settings.section", () => ctx.slots.register({
 				name: "settings.section",
-				id: "dsh-island",
+				id: "dsh-dynamic-island",
 				order: 30,
 				label: () => t("nav"),
 				locale: NS,
 				inject: () => ({ hooks: { island: form }, write })
-			}, IslandSection))), "dsh-island: settings section");
+			}, IslandSection))), "dsh-dynamic-island: settings section");
 		}
 
 		exports.NS = NS;

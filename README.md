@@ -1,10 +1,12 @@
-# DeepSeek Island · 桌面灵动岛
+# dsh-dynamic-island · 桌面灵动岛
 
 DeepSeek Harness 的桌面灵动岛插件：像 iPhone 灵动岛一样停在屏幕边缘，实时显示 Agent 在做什么——思考、回答、执行工具、等你确认；展开后是任务控制台，可以看计划进度、上下文占用和用量、停止任务，直接批准权限请求、回答 Agent 的提问，任务完成时预览回复；还能切换工作区、在已有对话之间跳转或直接新建对话；另有面板内的用量统计，并按 DeepSeek 官方价格估算费用。
 
 > 社区插件，非 DeepSeek 官方产品。DeepSeek 名称与鲸鱼标志归其所有者。
+>
+> 本插件基于 [a961282799-crypto/dsh-island](https://github.com/a961282799-crypto/dsh-island)（MIT）衍生，原作者与贡献者的版权保留；本仓库的改动版权归 xsxElricor。
 
-## 0.7.0 更新
+## 0.1.0 首发（基于上游 0.6.2）
 
 - 展开面板顶部新增工作区/会话切换：左键选工作区，中键选该工作区最近的对话，右键在该工作区新建对话（默认标准模式）。
 - 审批卡显示「允许本次操作使用 <模式> 权限」和目的，与 Harness 主窗口一致。
@@ -18,6 +20,8 @@ DeepSeek Harness 的桌面灵动岛插件：像 iPhone 灵动岛一样停在屏�
 - 主面板移除「过去 24 小时」柱状图与「今天完成/工作时长/今日 tokens」三个小卡片。
 
 ![十一种状态](docs/states.png)
+
+> 截图来自上游 0.6.2 版本；当前版本的会话栏、面板内用量视图等界面已有所不同。
 
 | 任务控制台 | 在灵动岛回答提问 |
 | --- | --- |
@@ -35,8 +39,8 @@ DeepSeek Harness 的桌面灵动岛插件：像 iPhone 灵动岛一样停在屏�
 
 需要 **DeepSeek Harness 桌面版 0.2.2-rc.1**（Windows）。
 
-- **在 Harness 里安装**：侧栏「插件」→「添加插件」，输入 `dsh-island`，安装后启用。
-- **命令行**：先从托盘退出 Harness，再运行 `dsh plugin --profile desktop add dsh-island`。
+- **在 Harness 里安装**：侧栏「插件」→「添加插件」，输入 `dsh-dynamic-island`，安装后启用。
+- **命令行**：先从托盘退出 Harness，再运行 `dsh plugin --profile desktop add dsh-dynamic-island`。
 - **从源码**：克隆本仓库，双击 **安装到 Harness.cmd**。
 
 装好后，位置、大小等选项在 Harness 的「设置 › 灵动岛」中调整。
@@ -71,7 +75,7 @@ DeepSeek Harness 的桌面灵动岛插件：像 iPhone 灵动岛一样停在屏�
 - **点中间**：只列出这个工作区下的对话（还没发过消息的空会话不显示），选一个就切过去，灵动岛随之显示它的状态和最近回复，输入框发的消息也发给它。
 - **点右边**：在这个工作区里新建对话，默认使用「标准」模式，并立即成为灵动岛当前对话；它也会出现在 Harness 侧栏对应工作区下。
 
-选中的工作区和对话记在 `~/.dsh/dsh-island/hub.json`，重开 Harness 后保持；也可以在 设置 › 灵动岛 里关闭「工作区与会话切换」。
+选中的工作区和对话记在 `~/.dsh/dsh-dynamic-island/hub.json`，重开 Harness 后保持；也可以在 设置 › 灵动岛 里关闭「工作区与会话切换」。
 
 ## 任务控制台（展开面板）
 
@@ -81,7 +85,7 @@ DeepSeek Harness 的桌面灵动岛插件：像 iPhone 灵动岛一样停在屏�
 | 刚结束 | **有新回复**：Agent 最后一条回复的开头（点击回到 Harness 看全文）；结果、最终计划进度、本次用量 |
 | 空闲 | 提示语和最近几个任务（结果、时长、多久以前）；用量、余额和峰谷在统计视图里 |
 
-**停止任务**要点两次（第一次变红确认），效果与 Harness 里的停止按钮相同，只对顶层任务生效；子智能体不会单独列为任务，除非它在等你确认或出错。用量数据来自 Harness 自己的会话记录（`ctx.sessionQuery`）：启用后在后台补算最近 30 天的会话，之后跟随实时事件更新，汇总保存在 `%USERPROFILE%\.dsh\dsh-island\usage.json`，只含会话标题、每轮的模型、时间、结果、调用与工具次数、token 数和估算费用，保留 35 天，不含对话内容。
+**停止任务**要点两次（第一次变红确认），效果与 Harness 里的停止按钮相同，只对顶层任务生效；子智能体不会单独列为任务，除非它在等你确认或出错。用量数据来自 Harness 自己的会话记录（`ctx.sessionQuery`）：启用后在后台补算最近 30 天的会话，之后跟随实时事件更新，汇总保存在 `%USERPROFILE%\.dsh\dsh-dynamic-island\usage.json`，只含会话标题、每轮的模型、时间、结果、调用与工具次数、token 数和估算费用，保留 35 天，不含对话内容。
 
 账户余额通过 Harness 自己的账户服务读取（与「设置 › 账户」相同），只在用 DeepSeek 账号登录时可用；灵动岛看不到任何令牌或 API Key。打开面板时最多每分钟刷新一次，另外每 10 分钟刷新一次。
 
@@ -143,7 +147,7 @@ Agent 要执行需要授权的操作（运行命令、修改文件、访问网�
 | 显示账户余额 | 空闲时显示 DeepSeek 账户余额 |
 | 减少动态效果 | 关闭循环动画和弹性过渡（也跟随系统设置） |
 
-这些选项保存在 Harness 的 desktop profile 配置中（插件条目 `dsh-island`）。显示器选择在面板的「···」菜单里，隐藏状态在本地保存。
+这些选项保存在 Harness 的 desktop profile 配置中（插件条目 `dsh-dynamic-island`）。显示器选择在面板的「···」菜单里，隐藏状态在本地保存。
 
 ## 状态与动效
 
@@ -179,7 +183,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/install-desktop.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts/install-desktop.ps1 -Action Remove
 ```
 
-安装由官方 `dsh plugin --profile desktop add` 完成。本插件不修改悬浮球插件或宿主安装目录，不增加开机自启。设置保存在 `%USERPROFILE%\.dsh\dsh-island\settings.json`。退出 Harness 或停用插件后，窗口随宿主关闭。
+安装由官方 `dsh plugin --profile desktop add` 完成。本插件不修改悬浮球插件或宿主安装目录，不增加开机自启。设置保存在 `%USERPROFILE%\.dsh\dsh-dynamic-island\settings.json`。退出 Harness 或停用插件后，窗口随宿主关闭。
 
 运行环境复用当前机器已有的 `%USERPROFILE%\.dsh\dsh-orb\electron-runtime\electron.exe`。它不是独立安装包：在其他机器上需要已有 Electron，或使用环境变量 `DSH_ISLAND_ELECTRON` 指定其路径。安装归档不含 Electron，不会自动下载运行环境。可用 `DSH_HOME` 指定 Harness 数据根目录。
 

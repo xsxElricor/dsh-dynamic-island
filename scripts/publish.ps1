@@ -1,4 +1,4 @@
-﻿# 一键发布：GitHub（公开仓库 <你的用户名>/dsh-island）+ npm（包名 dsh-island）。
+# 一键发布：GitHub（公开仓库 <你的用户名>/dsh-dynamic-island）+ npm（包名 dsh-dynamic-island）。
 # 登录都在浏览器里完成，本脚本不读取、不保存任何密码或令牌。
 $ErrorActionPreference = 'Continue'
 try { [Console]::OutputEncoding = [Text.Encoding]::UTF8 } catch {}
@@ -32,7 +32,7 @@ function Need([string]$cmd, [string]$wingetId, [string]$name) {
 }
 
 try {
-  $pkgName = 'dsh-island'
+  $pkgName = (Get-Content -LiteralPath (Join-Path $root 'package.json') -Raw -Encoding UTF8 | ConvertFrom-Json).name
   # 只对本脚本使用官方源：国内镜像是只读的，不能登录发布。不改动你的全局 npm 设置。
   $reg = 'https://registry.npmjs.org/'
   $version = (Get-Content -LiteralPath (Join-Path $root 'package.json') -Raw -Encoding UTF8 | ConvertFrom-Json).version
@@ -104,7 +104,7 @@ try {
   Write-Host '全部完成！' -ForegroundColor Green
   Write-Host "  GitHub  $url"
   Write-Host "  npm     https://www.npmjs.com/package/$pkgName"
-  Write-Host '  别人可以在 Harness 的「插件 › 添加插件」里输入 dsh-island 安装。'
+  Write-Host "  别人可以在 Harness 的「插件 › 添加插件」里输入 $pkgName 安装。"
 } catch {
   Write-Host ''
   Write-Host "没有完成：$($_.Exception.Message)" -ForegroundColor Red
