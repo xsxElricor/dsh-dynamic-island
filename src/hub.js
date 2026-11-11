@@ -152,11 +152,15 @@ export class SessionHub {
     const value = String(id ?? '');
     if (!this.workspaces.some(w => w.id === value)) { this.log('workspace rejected', value); return { ok: false, reason: '找不到这个工作区' }; }
     this.workspaceId = value;
-    this.#save();
     await this.refresh(true);
-    this.log('workspace', { id: value, rows: this.rows.length });
+    // 切工作区后，中间按钮自然落到这个工作区最近的一条对话；没有对话就留空。
+    const recent = this.rows[0];
+    this.sessionId = recent ? recent.id : null;
+    if (recent) this.seed?.(recent.id, { title: recent.title, running: recent.running });
+    this.#save();
+    this.log('workspace', { id: value, rows: this.rows.length, session: this.sessionId });
     this.publish?.();
-    return { ok: true, workspaceId: value };
+    return { ok: true, workspaceId: value, sessionId: this.sessionId };
   }
 
   async focus(sessionId) {
