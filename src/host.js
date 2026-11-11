@@ -159,7 +159,8 @@ export function apply(ctx, config = {}) {
     // Settings edited in Harness arrive as volatile updates; forward them without restarting the window.
     let balanceAt = 0, balanceBusy = false;
     const refreshBalance = async (force = false) => {
-      if (!prefs.balance) { message({ type: 'balance', data: null }); return; }
+      // 被动刷新（展开面板、定时）尊重「显示账户余额」；统计视图主动请求时（force）总是取一次。
+      if (!force && !prefs.balance) return;
       if (balanceBusy || (!force && Date.now() - balanceAt < 60000)) return;
       balanceBusy = true;
       try { const data = await readBalance(account); balanceAt = Date.now(); hub.log('balance', data ? 'ok' : `null account=${Boolean(account)}`); message({ type: 'balance', data }); }
@@ -171,7 +172,7 @@ export function apply(ctx, config = {}) {
       if (next.enabled && !prefs.enabled) message({ type: 'show' });
       const balanceChanged = next.balance !== prefs.balance;
       prefs = next; hub.prefs = next; desk.enabled = prefs.questions; approvals.enabled = prefs.approvals; chat.enabled = prefs.chat; message({ type: 'prefs', data: prefs }); publish();
-      if (balanceChanged) refreshBalance(true);
+      if (balanceChanged) refreshBalance(next.balance);
     });
     try {
       child=spawn(runtimePath(env),[fileURLToPath(new URL('../desktop/main.cjs',import.meta.url)),`--island-data=${dataDir}`],{
@@ -180,7 +181,7 @@ export function apply(ctx, config = {}) {
       child.stderr.on('data',()=>{});
       child.on('error',error=>ctx.logger.warn(`灵动岛启动失败：${error.message}`));
       child.on('message',msg=>{
-        if(msg?.type==='ready'){ last=''; message({ type: 'prefs', data: prefs }); send(); setTimeout(() => refreshBalance(true), 3000).unref?.(); }
+        if(msg?.type==='ready'){ last=''; message({ type: 'prefs', data: prefs }); send(); setTimeout(() => refreshBalance(prefs.balance), 3000).unref?.(); }
         if(msg?.type==='panel-open'){ refreshBalance(); hub.refresh(true).then(() => publish()); }
         if(msg?.type==='balance') refreshBalance(true);
         // 工作区 / 会话：列表按需刷新，选中即成为灵动岛当前对话。
@@ -197,7 +198,7 @@ export function apply(ctx, config = {}) {
       child.on('exit',code=>{ if(!stopped && code)ctx.logger.warn(`灵动岛窗口已退出 (${code})，重新启用插件可恢复。`); });
     } catch(error) { ctx.logger.warn(error.message); }
     const timer=setInterval(publish,1000); timer.unref();
-    const balanceTimer=setInterval(() => refreshBalance(true), 10 * 60000); balanceTimer.unref();
+    const balanceTimer=setInterval(() => refreshBalance(prefs.balance), 10 * 60000); balanceTimer.unref();
     return () => { stopped=true; detach(); offDesk?.(); offApprovals?.(); offLedger?.(); backfillAbort.abort(); clearTimeout(backfillFirst); clearInterval(backfillTimer); ledger.save(); offSettings?.(); clearInterval(timer); clearInterval(balanceTimer); clearInterval(hubTimer); clearTimeout(hubBoot); clearTimeout(pending); if(child?.connected)child.send({type:'shutdown'}); setTimeout(()=>{if(child?.exitCode===null)child.kill();},1500).unref(); };
   });
 }

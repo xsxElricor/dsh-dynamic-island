@@ -64,7 +64,7 @@ async function start() {
     };
   };
   // Harness 侧的用量账本（含历史会话补算）优先；没有时退回本地的完成记录。
-  const payload=()=>({activity,settings,prefs,answerResults,approvalResults,chatResults,balance:prefs.balance?balance:null,preview:demo,history:activity.usage??summary(),displays:screen.getAllDisplays().map((d,i)=>({id:d.id,label:d.label||`显示器 ${i+1}`}))});
+  const payload=()=>({activity,settings,prefs,answerResults,approvalResults,chatResults,balance,preview:demo,history:activity.usage??summary(),displays:screen.getAllDisplays().map((d,i)=>({id:d.id,label:d.label||`显示器 ${i+1}`}))});
   const send=()=>{ if(win && !win.isDestroyed())win.webContents.send('island:snapshot',payload()); };
   const position=()=>{
     const display=screen.getAllDisplays().find(d=>d.id===settings.displayId)||screen.getPrimaryDisplay();

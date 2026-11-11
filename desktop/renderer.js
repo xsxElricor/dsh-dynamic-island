@@ -290,7 +290,8 @@ function renderPanel({activity:a,prefs={},history={},balance,preview}){
   const t=history.today||{};
   $('today').hidden=!idle;
   $('today-count').textContent=String(t.count||0);$('today-time').textContent=duration(t.ms||0);
-  const wallet=balance?.wallets?.find(w=>w.currency==='CNY')??balance?.wallets?.[0];
+  // 主面板的余额格子尊重「显示账户余额」；统计视图里的余额始终显示。
+  const wallet=(prefs.balance===false?null:balance)?.wallets?.find(w=>w.currency==='CNY')??(prefs.balance===false?null:balance)?.wallets?.[0];
   $('third-tile').classList.toggle('money',!!wallet);
   if(wallet){
     const bonus=(balance.bonus||[]).filter(w=>w.currency===wallet.currency).reduce((n,w)=>n+Number(w.balance),0);
