@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, screen, Menu, Tray, nativeImage, shell } = require('electron');
+const { app, BrowserWindow, ipcMain, screen, Menu, shell } = require('electron');
 const fs = require('node:fs');
 const path = require('node:path');
 const { pathToFileURL } = require('node:url');
@@ -32,7 +32,7 @@ async function start() {
   let answerResults={},approvalResults={},chatResults={};
   let statsRange='today',fitCss=0;
   let history=Array.isArray(read('history.json',[]))?read('history.json',[]):[];
-  let win, tray, ignore=true, hitbox=null, quitting=false, menuOpen=false, activity={state:'idle',activeCount:0}, demoTimer;
+  let win, ignore=true, hitbox=null, quitting=false, menuOpen=false, activity={state:'idle',activeCount:0}, demoTimer;
   const save=()=>write('settings.json',settings);
   const visible=()=>settings.enabled&&prefs.enabled;
 
@@ -92,7 +92,7 @@ async function start() {
     if(process.send)process.send({type:'stats',range:statsRange});
     else if(win&&!win.isDestroyed())win.webContents.send('island:stats-data',null);
   };
-  // 托盘「用量统计」：显示灵动岛并把面板切到统计视图，由页面自己请求数据。
+  // 「···」菜单的「用量统计」：显示灵动岛并把面板切到统计视图，由页面自己请求数据。
   const openStats=()=>{show();win?.webContents.send('island:open-stats');};
   const menu=()=>Menu.buildFromTemplate([
     {label:visible()?'隐藏灵动岛':'显示灵动岛',click:()=>visible()?hide():show()},
@@ -232,11 +232,6 @@ async function start() {
   await win.loadFile(path.join(__dirname,'index.html'));
   position();
   if(visible())win.showInactive();
-  const image = await win.webContents.executeJavaScript(`new Promise(resolve=>{const img=new Image();img.onload=()=>{const c=document.createElement('canvas');c.width=c.height=32;const x=c.getContext('2d');x.drawImage(img,0,0,32,32);x.globalCompositeOperation='source-in';x.fillStyle='#4d6bfe';x.fillRect(0,0,32,32);resolve(c.toDataURL())};img.onerror=()=>resolve('');img.src='../assets/deepseek.svg'})`);
-  tray=new Tray(image?nativeImage.createFromDataURL(image):nativeImage.createEmpty());
-  tray.setToolTip(demo?'DeepSeek 灵动岛 · 动画预览':'DeepSeek 灵动岛');
-  tray.on('click',()=>visible()?hide():show());
-  tray.on('right-click',()=>tray.popUpContextMenu(menu()));
   const cursorTimer=setInterval(()=>{
     if(!win.isVisible()||!hitbox)return;
     const p=screen.getCursorScreenPoint(),b=win.getBounds(),s=settings.scale;
@@ -248,7 +243,7 @@ async function start() {
   app.on('second-instance',show);
   win.on('blur',blurred);
   win.on('close',event=>{if(!quitting){event.preventDefault();hide();}});
-  app.on('before-quit',()=>{quitting=true;clearInterval(cursorTimer);clearInterval(demoTimer);tray?.destroy();});
+  app.on('before-quit',()=>{quitting=true;clearInterval(cursorTimer);clearInterval(demoTimer);});
   if(process.send) process.send({type:'ready'});
   if(demo && process.argv.includes('--cycle'))playDemo();
   if(process.argv.includes('--stats'))openStats();
