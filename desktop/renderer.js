@@ -39,7 +39,13 @@ function applyShape(){
   if(island.dataset.shape!==next){island.dataset.shape=next;trackTransition();}
   fitPanel();
 }
-function fitPanel(){island.style.height=expanded?`${Math.min(innerHeight-24,$('panel').scrollHeight+76)}px`:'';}
+function fitPanel(){
+  if(!expanded){island.style.height='';bridge.fit?.(0);return;}
+  // 面板需要多高就把灵动岛长多高（主进程据此调整窗口），不再在面板内滚动。
+  const want=Math.min(820,$('panel').scrollHeight+76);
+  island.style.height=`${want}px`;
+  bridge.fit?.(want);
+}
 
 function expand(value){
   expanded=value;peek=false;clearTimeout(peekTimer);clearTimeout(hoverTimer);

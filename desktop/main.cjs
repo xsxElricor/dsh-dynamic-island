@@ -30,7 +30,7 @@ async function start() {
   let prefs={enabled:true,popups:true,details:true,balance:true,questions:true,approvals:true,chat:true,hoverExpand:true};
   let balance=null;
   let answerResults={},approvalResults={},chatResults={};
-  let statsRange='today';
+  let statsRange='today',fitCss=0;
   let history=Array.isArray(read('history.json',[]))?read('history.json',[]):[];
   let win, tray, ignore=true, hitbox=null, quitting=false, menuOpen=false, activity={state:'idle',activeCount:0}, demoTimer;
   const save=()=>write('settings.json',settings);
@@ -69,7 +69,9 @@ async function start() {
   const position=()=>{
     const display=screen.getAllDisplays().find(d=>d.id===settings.displayId)||screen.getPrimaryDisplay();
     win.webContents.setZoomFactor(settings.scale);
-    win.setBounds(windowBounds(display.workArea,settings,WIDTH,HEIGHT));
+    // 面板需要的高度（CSS px）决定窗口高度，窗口至少保持基础高度；锚点仍由 windowBounds 按停靠位置计算。
+    const cssHeight=Math.max(HEIGHT,fitCss+24);
+    win.setBounds(windowBounds(display.workArea,settings,WIDTH,cssHeight));
     hitbox=null; send();
   };
   const sync=()=>{ position(); if(visible())win.showInactive(); else win.hide(); send(); };
@@ -150,6 +152,13 @@ async function start() {
   ipcMain.on('island:hub-select',(event,id)=>{if(trusted(event)&&typeof id==='string'&&id.length<=200&&process.send)process.send({type:'hub/select',id});});
   ipcMain.on('island:hub-new',event=>{if(trusted(event)&&process.send)process.send({type:'hub/new'});});
   ipcMain.on('island:stats',(event,range)=>{if(trusted(event))requestStats(typeof range==='string'?range:statsRange);});
+  // 面板高度变化：按需把窗口长高/收回，内容不再在面板内滚动。
+  ipcMain.on('island:fit',(event,cssHeight)=>{
+    if(!trusted(event))return;
+    const next=Number.isFinite(cssHeight)?Math.max(0,Math.min(900,cssHeight)):0;
+    if(Math.abs(next-fitCss)<1)return;
+    fitCss=next;position();
+  });
   ipcMain.on('island:balance',event=>{if(trusted(event)&&process.send)process.send({type:'balance'});});
   ipcMain.on('island:approve',(event,id,outcome)=>{
     if(!trusted(event)||typeof id!=='string'||!['allowed-once','rejected'].includes(outcome))return;
