@@ -1,4 +1,4 @@
-﻿# 一键发布到 GitHub（公开仓库 <你的用户名>/dsh-dynamic-island）。不发布 npm。
+# 一键发布到 GitHub（公开仓库 <你的用户名>/dsh-dynamic-island）。不发布 npm。
 # 登录都在浏览器里完成，本脚本不读取、不保存任何密码或令牌。
 $ErrorActionPreference = 'Continue'
 try { [Console]::OutputEncoding = [Text.Encoding]::UTF8 } catch {}
@@ -75,8 +75,19 @@ try {
   if (-not $script:RetryOk) { Fail "推送到 $repo 失败，请检查网络或代理后重新运行。" }
   git tag -f "v$version" | Out-Null
   Retry { git push -f origin "v$version" *> $null } '推送标签'
-  gh repo edit $repo --add-topic deepseek --add-topic deepseek-harness --add-topic dynamic-island --add-topic electron *> $null
+  gh repo edit $repo --add-topic deepseek --add-topic deepseek-harness --add-topic dynamic-island --add-topic electron --add-topic dsh-plugin *> $null
   Done "GitHub：$url"
+
+  Step '生成安装包并创建 Release'
+  try {
+    npm run pack:plugin *> $null
+    $tgz = Join-Path $root "artifacts/$pkgName-$version.tgz"
+    if (Test-Path -LiteralPath $tgz) {
+      $relExists = { gh release view "v$version" *> $null; $LASTEXITCODE -eq 0 }
+      Retry { gh release create "v$version" $tgz --title "v$version" --notes "dsh-dynamic-island $version" } '创建 Release' $relExists
+      if ($script:RetryOk) { Done "Release：$url/releases/tag/v$version" } else { Write-Host '   Release 创建失败，可稍后手动创建。' -ForegroundColor Yellow }
+    } else { Write-Host "   没有找到 $tgz，跳过 Release。" -ForegroundColor Yellow }
+  } catch { Write-Host "   Release 步骤失败：$($_.Exception.Message)" -ForegroundColor Yellow }
 
   Write-Host ''
   Write-Host 'GitHub 发布完成（未发布 npm）。' -ForegroundColor Green
