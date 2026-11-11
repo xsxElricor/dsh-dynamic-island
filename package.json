@@ -1,6 +1,6 @@
 {
   "name": "dsh-dynamic-island",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "DeepSeek Harness 桌面灵动岛插件：实时任务状态、上下文占用、审批与提问、工作区/会话切换、面板内用量统计（dsh-island 衍生版）",
   "type": "module",
   "license": "MIT",

@@ -4,7 +4,6 @@ contextBridge.exposeInMainWorld('island',{
   subscribe:callback=>{const fn=(_event,data)=>callback(data);ipcRenderer.on('island:snapshot',fn);return()=>ipcRenderer.removeListener('island:snapshot',fn);},
   onBlur:callback=>{const fn=()=>callback();ipcRenderer.on('island:blur',fn);return()=>ipcRenderer.removeListener('island:blur',fn);},
   engage:()=>ipcRenderer.send('island:engage'),
-  settings:value=>ipcRenderer.send('island:settings',value),
   bounds:value=>ipcRenderer.send('island:bounds',value),
   menu:()=>ipcRenderer.send('island:menu'),
   open:()=>ipcRenderer.send('island:open'),

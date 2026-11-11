@@ -1,8 +1,6 @@
 // DeepSeek 官方 API 价格（人民币 / 百万 tokens），用于估算费用。
 // 来源：https://api-docs.deepseek.com/zh-cn/quick_start/pricing （2026-10-27 查询）。价格可能调整，估算仅供参考。
 // 高峰时段：北京时间周一至周五 9:00–12:00、14:00–18:00；其余为空闲时段（法定节假日无法自动识别，按工作日计）。
-export const PRICES_AS_OF = '2026-10-27';
-export const PRICE_SOURCE = 'https://api-docs.deepseek.com/zh-cn/quick_start/pricing';
 
 const TABLE = {
   'deepseek-flash': { offPeak: { hit: 0.02, miss: 1, out: 4 }, peak: { hit: 0.04, miss: 2, out: 8 } },

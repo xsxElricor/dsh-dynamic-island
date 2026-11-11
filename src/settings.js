@@ -1,9 +1,10 @@
 import { createRequire } from 'node:module';
 import { dirname, join } from 'node:path';
+import { SIZES } from './geometry.js';
 
+export { SIZES };
 // 灵动岛在 Harness「设置 › 灵动岛」中的选项。字段都是 volatile：修改后即时生效，不重启插件。
 export const POSITIONS = ['top-center', 'top-left', 'top-right', 'left-center', 'right-center', 'right-upper', 'bottom-center'];
-export const SIZES = { small: 0.85, medium: 1, large: 1.15 };
 export const DEFAULT_PREFS = { enabled: true, position: 'top-center', size: 'medium', reduceMotion: false, popups: true, details: true, balance: true, questions: true, approvals: true, chat: true, hoverExpand: true, sessions: true };
 
 async function loadSchemastery() {

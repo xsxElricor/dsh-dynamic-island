@@ -12,11 +12,10 @@ if(!single) app.quit();
 else start().catch(error=>{ console.error(error); app.exit(1); });
 
 const WIDTH = 440, HEIGHT = 540;
-const SIZES = { small: 0.85, medium: 1, large: 1.15 };
 const DAY = 24 * 3600 * 1000;
 
 async function start() {
-  const {normalizeSettings,windowBounds,containsPoint,POSITIONS}=await import(pathToFileURL(path.join(__dirname,'../src/geometry.js')));
+  const {normalizeSettings,windowBounds,containsPoint,POSITIONS,SIZES}=await import(pathToFileURL(path.join(__dirname,'../src/geometry.js')));
   const {STATES}=await import(pathToFileURL(path.join(__dirname,'../src/state.js')));
   const read=(file,fallback)=>{ try { return JSON.parse(fs.readFileSync(path.join(dataDir,file),'utf8')); } catch { return fallback; } };
   const write=(file,value)=>{
@@ -31,7 +30,8 @@ async function start() {
   let balance=null;
   let answerResults={},approvalResults={},chatResults={};
   let statsRange='today',fitCss=0;
-  let history=Array.isArray(read('history.json',[]))?read('history.json',[]):[];
+  const historyRaw=read('history.json',[]);
+  let history=Array.isArray(historyRaw)?historyRaw:[];
   let win, ignore=true, hitbox=null, quitting=false, menuOpen=false, activity={state:'idle',activeCount:0}, demoTimer;
   const save=()=>write('settings.json',settings);
   const visible=()=>settings.enabled&&prefs.enabled;
@@ -50,18 +50,8 @@ async function start() {
     try{write('history.json',history);}catch{}
   };
   const summary=()=>{
-    const now=Date.now(),midnight=new Date();midnight.setHours(0,0,0,0);
-    const today=history.filter(h=>h.ended>=midnight.getTime());
-    const total=h=>(h.inputTokens||0)+(h.cacheTokens||0)+(h.outputTokens||0);
-    // 过去 24 小时，每小时一根柱（按任务结束时间计）。
-    const hours=Array.from({length:24},()=>0);
-    for(const h of history){const age=now-h.ended;if(age>=0&&age<DAY)hours[23-Math.floor(age/3600e3)]+=total(h);}
-    const day=history.filter(h=>now-h.ended<DAY),input=day.reduce((n,h)=>n+(h.inputTokens||0),0),cache=day.reduce((n,h)=>n+(h.cacheTokens||0),0);
-    return {
-      recent:history.slice(-4).reverse(),
-      today:{count:today.filter(h=>h.state==='completed').length,runs:today.length,ms:today.reduce((n,h)=>n+Math.max(0,h.ended-h.started),0),outputTokens:today.reduce((n,h)=>n+(h.outputTokens||0),0),tokens:today.reduce((n,h)=>n+total(h),0)},
-      day:{hours,tokens:hours.reduce((a,b)=>a+b,0),cacheRate:input+cache>0?Math.round(cache/(input+cache)*100):null}
-    };
+    const day=history.filter(h=>Date.now()-h.ended<DAY),total=h=>(h.inputTokens||0)+(h.cacheTokens||0)+(h.outputTokens||0);
+    return {recent:history.slice(-4).reverse(),day:{tokens:day.reduce((n,h)=>n+total(h),0)}};
   };
   // Harness 侧的用量账本（含历史会话补算）优先；没有时退回本地的完成记录。
   const payload=()=>({activity,settings,prefs,answerResults,approvalResults,chatResults,balance,preview:demo,history:activity.usage??summary(),displays:screen.getAllDisplays().map((d,i)=>({id:d.id,label:d.label||`显示器 ${i+1}`}))});
@@ -113,7 +103,6 @@ async function start() {
   win.webContents.on('will-navigate',event=>event.preventDefault());
   const trusted=event=>event.sender===win.webContents && event.senderFrame===win.webContents.mainFrame;
   ipcMain.handle('island:initial',event=>trusted(event)?payload():null);
-  ipcMain.on('island:settings',(event,value)=>{if(trusted(event)&&value&&typeof value==='object'&&demo)update(value);});
   ipcMain.on('island:bounds',(event,rect)=>{
     if(!trusted(event)||!rect||!['x','y','width','height'].every(k=>Number.isFinite(rect[k])))return;
     hitbox={x:Math.max(0,rect.x),y:Math.max(0,rect.y),width:Math.min(WIDTH,Math.max(0,rect.width)),height:Math.min(HEIGHT,Math.max(0,rect.height)),radius:Number.isFinite(rect.radius)?Math.max(0,rect.radius):0};

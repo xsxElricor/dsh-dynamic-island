@@ -1,9 +1,9 @@
 export const POSITIONS = { 'top-center': '顶部居中', 'left-center': '左侧居中', 'right-center': '右侧居中', 'right-upper': '右上（上三分之一）', 'bottom-center': '底部居中', 'top-left': '左上角', 'top-right': '右上角' };
-export const DEFAULT_SETTINGS = { position: 'top-center', scale: 1, motion: 'full', displayId: null, enabled: true };
+export const SIZES = { small: 0.85, medium: 1, large: 1.15 };
 export function normalizeSettings(value = {}) {
   return {
     position: Object.hasOwn(POSITIONS, value.position) ? value.position : 'top-center',
-    scale: [0.85,1,1.15].includes(value.scale) ? value.scale : 1,
+    scale: Object.values(SIZES).includes(value.scale) ? value.scale : 1,
     motion: value.motion === 'reduced' ? 'reduced' : 'full',
     displayId: Number.isInteger(value.displayId) ? value.displayId : null,
     enabled: value.enabled !== false
