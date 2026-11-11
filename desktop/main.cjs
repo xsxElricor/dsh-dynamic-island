@@ -30,7 +30,7 @@ async function start() {
   let prefs={enabled:true,popups:true,details:true,balance:true,questions:true,approvals:true,chat:true,hoverExpand:true};
   let balance=null;
   let answerResults={},approvalResults={},chatResults={};
-  let statsWin=null,statsRange='today';
+  let statsRange='today';
   let history=Array.isArray(read('history.json',[]))?read('history.json',[]):[];
   let win, tray, ignore=true, hitbox=null, quitting=false, menuOpen=false, activity={state:'idle',activeCount:0}, demoTimer;
   const save=()=>write('settings.json',settings);
@@ -83,24 +83,15 @@ async function start() {
     save();sync();
   };
   const openHarness=()=>shell.openExternal('dsh://open').catch(()=>{});
-  // 用量统计窗口：数据由 Harness 侧的用量账本按需计算（预览模式用示例数据）。
+  // 用量统计：不再开独立窗口，数据由 Harness 侧的用量账本按需计算后发回灵动岛面板（预览模式用示例数据）。
   const requestStats=range=>{
     statsRange=['today','7d','30d'].includes(range)?range:statsRange;
-    if(demo){const data=demoStats(statsRange);setTimeout(()=>statsWin?.webContents.send('stats:data',data),120);return;}
+    if(demo){const data=demoStats(statsRange);setTimeout(()=>{if(win&&!win.isDestroyed())win.webContents.send('island:stats-data',data);},120);return;}
     if(process.send)process.send({type:'stats',range:statsRange});
-    else statsWin?.webContents.send('stats:data',null);
+    else if(win&&!win.isDestroyed())win.webContents.send('island:stats-data',null);
   };
-  const openStats=()=>{
-    if(statsWin&&!statsWin.isDestroyed()){statsWin.show();statsWin.focus();requestStats(statsRange);return;}
-    statsWin=new BrowserWindow({width:860,height:680,minWidth:620,minHeight:480,show:false,title:'用量统计 · DeepSeek 灵动岛',backgroundColor:'#0b0e17',autoHideMenuBar:true,
-      webPreferences:{preload:path.join(__dirname,'stats-preload.cjs'),contextIsolation:true,nodeIntegration:false,sandbox:true}});
-    statsWin.setMenuBarVisibility(false);
-    statsWin.webContents.setWindowOpenHandler(({url})=>{if(/^https:\/\/api-docs\.deepseek\.com\//.test(url))shell.openExternal(url).catch(()=>{});return {action:'deny'};});
-    statsWin.webContents.on('will-navigate',event=>event.preventDefault());
-    statsWin.once('ready-to-show',()=>statsWin.show());
-    statsWin.on('closed',()=>{statsWin=null;});
-    statsWin.loadFile(path.join(__dirname,'stats.html'),{query:{preview:demo?'1':''}});
-  };
+  // 托盘「用量统计」：显示灵动岛并把面板切到统计视图，由页面自己请求数据。
+  const openStats=()=>{show();win?.webContents.send('island:open-stats');};
   const menu=()=>Menu.buildFromTemplate([
     {label:visible()?'隐藏灵动岛':'显示灵动岛',click:()=>visible()?hide():show()},
     {label:'显示器',submenu:screen.getAllDisplays().map((d,i)=>({label:d.label||`显示器 ${i+1}`,type:'radio',checked:(settings.displayId??screen.getPrimaryDisplay().id)===d.id,click:()=>update({displayId:d.id})}))},
@@ -158,8 +149,7 @@ async function start() {
   ipcMain.on('island:hub-workspace',(event,id)=>{if(trusted(event)&&typeof id==='string'&&id.length<=200&&process.send)process.send({type:'hub/workspace',id});});
   ipcMain.on('island:hub-select',(event,id)=>{if(trusted(event)&&typeof id==='string'&&id.length<=200&&process.send)process.send({type:'hub/select',id});});
   ipcMain.on('island:hub-new',event=>{if(trusted(event)&&process.send)process.send({type:'hub/new'});});
-  ipcMain.on('island:stats',event=>{if(trusted(event))openStats();});
-  ipcMain.on('stats:request',(event,range)=>{if(statsWin&&event.sender===statsWin.webContents&&event.senderFrame===statsWin.webContents.mainFrame)requestStats(range);});
+  ipcMain.on('island:stats',(event,range)=>{if(trusted(event))requestStats(typeof range==='string'?range:statsRange);});
   ipcMain.on('island:approve',(event,id,outcome)=>{
     if(!trusted(event)||typeof id!=='string'||!['allowed-once','rejected'].includes(outcome))return;
     if(!(activity.approvals||[]).some(a=>a.id===id))return;
@@ -222,7 +212,7 @@ async function start() {
     if(message?.type==='answer-result'&&typeof message.callId==='string'){answerResults={...Object.fromEntries(Object.entries(answerResults).filter(([,r])=>Date.now()-r.at<300000)),[message.callId]:{ok:!!message.ok,reason:String(message.reason||'').slice(0,80),at:Date.now()}};send();}
     if(message?.type==='chat-result'&&typeof message.id==='string'){chatResults={...Object.fromEntries(Object.entries(chatResults).filter(([,r])=>Date.now()-r.at<300000)),[message.id]:{ok:!!message.ok,mode:message.mode,reason:String(message.reason||'').slice(0,80),at:Date.now()}};send();}
     if(message?.type==='approval-result'&&typeof message.id==='string'){approvalResults={...Object.fromEntries(Object.entries(approvalResults).filter(([,r])=>Date.now()-r.at<300000)),[message.id]:{ok:!!message.ok,reason:String(message.reason||'').slice(0,80),at:Date.now()}};send();}
-    if(message?.type==='stats'&&statsWin&&!statsWin.isDestroyed())statsWin.webContents.send('stats:data',message.data??null);
+    if(message?.type==='stats'){if(win&&!win.isDestroyed())win.webContents.send('island:stats-data',message.data??null);}
     if(message?.type==='balance'){balance=message.data&&Array.isArray(message.data.wallets)?message.data:null;send();}
     if(message?.type==='hub-error'){activity={...activity,hub:{...(activity.hub||{}),note:String(message.reason||'').slice(0,120)}};send();}
     if(message?.type==='activity'&&Object.hasOwn(STATES,message.data?.state)){activity=message.data;remember(activity.finished);send();}
@@ -248,7 +238,7 @@ async function start() {
   app.on('second-instance',show);
   win.on('blur',blurred);
   win.on('close',event=>{if(!quitting){event.preventDefault();hide();}});
-  app.on('before-quit',()=>{quitting=true;statsWin?.destroy();clearInterval(cursorTimer);clearInterval(demoTimer);tray?.destroy();});
+  app.on('before-quit',()=>{quitting=true;clearInterval(cursorTimer);clearInterval(demoTimer);tray?.destroy();});
   if(process.send) process.send({type:'ready'});
   if(demo && process.argv.includes('--cycle'))playDemo();
   if(process.argv.includes('--stats'))openStats();

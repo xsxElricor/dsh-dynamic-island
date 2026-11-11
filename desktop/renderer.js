@@ -1,9 +1,10 @@
 import {STATES} from '../src/state.js';
+import {isPeak} from '../src/pricing.js';
 
 const $=id=>document.getElementById(id);
 const island=$('island'),stage=$('stage'),bridge=window.island;
 let current={activity:{state:'idle'},settings:{position:'top-center',scale:1,motion:'full'}};
-let expanded=false,peek=false,burstUntil=0,lastState='',boundsFrame,burstTimer,peekTimer,leaveTimer,armTimer,hoverTimer,listKey='',autoOpened=false,hoverOpened=false,lastReply='',hubMode=null;
+let expanded=false,peek=false,burstUntil=0,lastState='',boundsFrame,burstTimer,peekTimer,leaveTimer,armTimer,hoverTimer,listKey='',autoOpened=false,hoverOpened=false,lastReply='',hubMode=null,statsOpen=false,statsRange='today',statsData=null;
 const drafts=new Map(),seenAsk=new Set(),seenApproval=new Map(),sentApproval=new Map();
 
 // 出现时短暂"弹出"以示提醒；思考仅在新任务开始时弹出。
@@ -42,7 +43,7 @@ function fitPanel(){island.style.height=expanded?`${Math.min(innerHeight-24,$('p
 
 function expand(value){
   expanded=value;peek=false;clearTimeout(peekTimer);clearTimeout(hoverTimer);
-  if(!value){hoverOpened=false;hubMode=null;delete $('panel').dataset.view;}
+  if(!value){hoverOpened=false;hubMode=null;statsOpen=false;delete $('panel').dataset.view;}
   island.dataset.expanded=String(value);
   $('capsule').setAttribute('aria-expanded',String(value));
   $('capsule').setAttribute('aria-label',value?'收起 DeepSeek 灵动岛':'展开 DeepSeek 灵动岛');
@@ -72,7 +73,7 @@ island.addEventListener('mouseleave',()=>{
 });
 
 $('capsule').addEventListener('click',()=>{autoOpened=false;const pinned=hoverOpened;hoverOpened=false;clearTimeout(hoverTimer);if(pinned&&expanded){applyShape();return;}expand(!expanded);});
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(hubMode){closeHub();return;}if(expanded)expand(false);}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(statsOpen){closeStats();return;}if(hubMode){closeHub();return;}if(expanded)expand(false);}});
 // 点击灵动岛以外的地方即收起：按下时让窗口拿到焦点，失焦时收起（提问草稿保留，重新展开可继续）。
 island.addEventListener('pointerdown',()=>bridge.engage?.(),true);
 function dismiss(){
@@ -90,7 +91,7 @@ $('stop').addEventListener('click',()=>{
 });
 $('more').addEventListener('click',()=>bridge.menu());
 $('open-harness').addEventListener('click',()=>bridge.open());
-$('stats').addEventListener('click',()=>bridge.stats?.());
+$('stats').addEventListener('click',()=>statsOpen?closeStats():openStats());
 $('reply').addEventListener('click',()=>bridge.open());
 $('hide').addEventListener('click',()=>{expand(false);bridge.hide();});
 for(const [key,value] of Object.entries(STATES)){const o=document.createElement('option');o.value=key;o.textContent=value.label;$('demo-state').append(o);}
@@ -376,6 +377,37 @@ $('hub-rows').addEventListener('click',event=>{
   closeHub();bridge.hubSelect?.(row.dataset.id);
 });
 
+// 用量统计：在展开面板里直接切换视图，再点一次统计按钮回到对话主界面。
+function openStats(range=statsRange){
+  closeHub();statsOpen=true;
+  statsRange=['today','7d','30d'].includes(range)?range:'today';
+  $('panel').dataset.view='stats';
+  for(const b of $('stats-range').children)b.setAttribute('aria-selected',String(b.dataset.range===statsRange));
+  bridge.stats?.(statsRange);
+  renderStats();fitPanel();trackTransition();
+}
+function closeStats(){if(!statsOpen)return;statsOpen=false;delete $('panel').dataset.view;renderStats();fitPanel();trackTransition();}
+function renderStats(){
+  $('statsview').hidden=!statsOpen;
+  $('stats').dataset.active=String(statsOpen);
+  if(!statsOpen)return;
+  const d=statsData&&statsData.range===statsRange?statsData:null,t=d?.totals;
+  $('stats-tokens').textContent=t?tokens(t.tokens):'–';
+  $('stats-cost').textContent=t?(t.cost>=0.005?`¥${t.cost.toFixed(2)}`:'<¥0.01'):'–';
+  $('stats-cache').textContent=t&&t.cacheRate!=null?`${t.cacheRate}%`:'–';
+  $('stats-turns').textContent=t?`${t.completed}/${t.turns}`:'–';
+  const detail=current.activity?.detail||{};
+  const pct=detail.contextTokens&&detail.contextWindow?Math.min(100,Math.round(detail.contextTokens/detail.contextWindow*100)):null;
+  $('stats-context').textContent=detail.contextTokens?`${tokens(detail.contextTokens)}${pct!=null?` / ${tokens(detail.contextWindow)} (${pct}%)`:''}`:'–';
+  const wallet=current.balance?.wallets?.find(w=>w.currency==='CNY')??current.balance?.wallets?.[0];
+  $('stats-balance').textContent=wallet?`${wallet.currency==='USD'?'$':'¥'}${Number(wallet.balance).toFixed(2)}`:'–';
+  const peak=isPeak(Date.now());
+  $('stats-period').textContent=peak?'高峰':'空闲（谷）';
+  $('stats-period').dataset.peak=String(peak);
+}
+$('stats-back').addEventListener('click',closeStats);
+$('stats-range').addEventListener('click',event=>{const b=event.target.closest('[data-range]');if(b)openStats(b.dataset.range);});
+
 // 状态切换：文字与指示器做模糊交叉淡入，异常时整体轻摇。
 function choreograph(state,prev){
   if(!motionOn()||!prev)return;
@@ -409,6 +441,7 @@ function render(snapshot){
   $('demo-controls').hidden=!preview;$('demo-state').value=state;
   renderPanel(snapshot);
   renderHub();
+  renderStats();
 
   for(const id of drafts.keys())if(!(a.questions||[]).some(q=>q.callId===id))drafts.delete(id);
   for(const id of [...seenApproval.keys()])if(!(a.approvals||[]).some(x=>x.id===id)){seenApproval.delete(id);sentApproval.delete(id);}
@@ -431,6 +464,8 @@ function render(snapshot){
 }
 
 const unsubscribe=bridge.subscribe(render);
+const offStats=bridge.onStats?.(data=>{statsData=data;renderStats();});
+const offOpenStats=bridge.onOpenStats?.(()=>{if(!expanded)expand(true);openStats();});
 render(await bridge.initial());
 const timer=setInterval(tick,1000);
-window.addEventListener('beforeunload',()=>{unsubscribe();offBlur?.();clearTimeout(chatStatusTimer);clearInterval(timer);cancelAnimationFrame(boundsFrame);clearTimeout(burstTimer);clearTimeout(peekTimer);clearTimeout(leaveTimer);clearTimeout(armTimer);clearTimeout(hoverTimer);});
+window.addEventListener('beforeunload',()=>{unsubscribe();offBlur?.();offStats?.();offOpenStats?.();clearTimeout(chatStatusTimer);clearInterval(timer);cancelAnimationFrame(boundsFrame);clearTimeout(burstTimer);clearTimeout(peekTimer);clearTimeout(leaveTimer);clearTimeout(armTimer);clearTimeout(hoverTimer);});

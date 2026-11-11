@@ -71,14 +71,17 @@ try{
   await page.click('#stop');assert.equal(await page.getAttribute('#stop','data-armed'),'true');
   await page.click('#stop');await page.waitForTimeout(700);
   assert.equal(await page.locator('#island').getAttribute('data-state'),'paused');
-  // Completed tasks preview the reply; the usage window opens from the panel.
+  // Completed tasks preview the reply; the usage view opens inside the panel and toggles back.
   await page.selectOption('#demo-state','completed');await page.waitForTimeout(700);
   assert.equal(await page.locator('#chat-reply').isVisible(),true,'the reply shows in the conversation card');
-  const [stats]=await Promise.all([app.waitForEvent('window'),page.click('#stats')]);
-  await stats.waitForFunction(()=>/^\d/.test(document.getElementById('k-turns').textContent));
-  await stats.click('[data-range="7d"]');await stats.waitForFunction(()=>document.getElementById('chart-title').textContent.includes('7'));
-  assert.equal(await stats.locator('.chart .col').count(),7);
-  await stats.screenshot({path:'artifacts/qa/stats.png'});await stats.close();
+  await page.click('#stats');await page.waitForTimeout(400);
+  assert.equal(await page.locator('#statsview').isVisible(),true,'the usage view replaces the panel');
+  await page.click('#stats-range [data-range="7d"]');await page.waitForTimeout(400);
+  assert.equal(await page.locator('#stats-range [data-range="7d"]').getAttribute('aria-selected'),'true');
+  assert.notEqual(await page.locator('#stats-tokens').textContent(),'–');
+  await page.screenshot({path:'artifacts/qa/stats.png'});
+  await page.click('#stats');await page.waitForTimeout(300);
+  assert.equal(await page.locator('#statsview').isVisible(),false,'a second click returns to the conversation panel');
   await settings({motion:'reduced'});await page.waitForTimeout(250);
   const activeAnimations=await page.evaluate(()=>document.getAnimations().filter(a=>a.playState==='running').length);assert.equal(activeAnimations,0);
   await settings({motion:'full'});await page.waitForTimeout(250);await page.keyboard.press('Escape');await page.waitForTimeout(750);

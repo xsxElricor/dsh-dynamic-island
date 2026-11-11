@@ -51,6 +51,29 @@
           <p id="hub-empty" class="hub-empty" hidden></p>
           <p id="hub-note" class="hub-note" hidden></p>
         </div>
+        <div id="statsview" class="statsview" hidden>
+          <div class="stats-head">
+            <button id="stats-back" type="button" class="hub-back" aria-label="返回">←</button>
+            <span class="stats-title">用量</span>
+            <div id="stats-range" class="stats-range" role="tablist" aria-label="统计范围">
+              <button type="button" data-range="today" role="tab" aria-selected="true">今天</button>
+              <button type="button" data-range="7d" role="tab" aria-selected="false">7 天</button>
+              <button type="button" data-range="30d" role="tab" aria-selected="false">30 天</button>
+            </div>
+          </div>
+          <div class="stats-grid">
+            <div class="stats-tile"><strong id="stats-tokens">–</strong><span>tokens</span></div>
+            <div class="stats-tile"><strong id="stats-cost">–</strong><span>估算费用</span></div>
+            <div class="stats-tile"><strong id="stats-cache">–</strong><span>缓存命中</span></div>
+            <div class="stats-tile"><strong id="stats-turns">–</strong><span>完成/轮次</span></div>
+          </div>
+          <div class="stats-rows">
+            <div class="stats-row"><span>当前上下文</span><b id="stats-context">–</b></div>
+            <div class="stats-row"><span>账户余额</span><b id="stats-balance">–</b></div>
+            <div class="stats-row"><span>当前时段</span><b id="stats-period">–</b></div>
+          </div>
+          <p id="stats-note" class="stats-note">费用按 DeepSeek 官方价格估算，仅供参考。</p>
+        </div>
         <form id="approve" class="card ask approve" hidden autocomplete="off">
           <div class="ask-top"><span class="ask-dot" aria-hidden="true"></span><span id="approve-title">需要你批准</span><span id="approve-count" class="num"></span></div>
           <p id="approve-reason" class="ask-q"></p>
