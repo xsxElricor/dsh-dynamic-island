@@ -162,8 +162,8 @@ export function apply(ctx, config = {}) {
       if (!prefs.balance) { message({ type: 'balance', data: null }); return; }
       if (balanceBusy || (!force && Date.now() - balanceAt < 60000)) return;
       balanceBusy = true;
-      try { const data = await readBalance(account); balanceAt = Date.now(); message({ type: 'balance', data }); }
-      catch { balanceAt = Date.now(); }
+      try { const data = await readBalance(account); balanceAt = Date.now(); hub.log('balance', data ? 'ok' : `null account=${Boolean(account)}`); message({ type: 'balance', data }); }
+      catch { balanceAt = Date.now(); hub.log('balance failed'); }
       finally { balanceBusy = false; }
     };
     const offSettings = ctx.on?.('loader/volatile-update', () => {
@@ -182,6 +182,7 @@ export function apply(ctx, config = {}) {
       child.on('message',msg=>{
         if(msg?.type==='ready'){ last=''; message({ type: 'prefs', data: prefs }); send(); setTimeout(() => refreshBalance(true), 3000).unref?.(); }
         if(msg?.type==='panel-open'){ refreshBalance(); hub.refresh(true).then(() => publish()); }
+        if(msg?.type==='balance') refreshBalance(true);
         // 工作区 / 会话：列表按需刷新，选中即成为灵动岛当前对话。
         if(msg?.type==='hub') hub.refresh(true).then(() => publish());
         if(msg?.type==='hub/workspace' && typeof msg.id==='string') hub.selectWorkspace(msg.id).catch(error => message({ type: 'hub-error', reason: error?.message ?? '切换工作区失败' }));

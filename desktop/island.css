@@ -246,14 +246,6 @@ p{margin:3px 0 0;font-size:11.5px;line-height:1.5;color:var(--muted)}
 .tile span{font-size:10px;color:var(--faint)}
 .tile.money strong{color:#f3f5ff}
 .tile.money strong small{font-size:11px;font-weight:500;color:var(--muted);margin-left:1px}
-.usage{padding:10px 12px 8px}
-.usage-head{display:flex;justify-content:space-between;align-items:baseline;font-size:11px;color:#c2cae0}
-.usage-head .num{font-size:10.5px;color:var(--muted)}
-.usage-bars{display:grid;grid-template-columns:repeat(24,1fr);align-items:end;gap:2px;height:34px;margin-top:8px}
-.usage-bars i{display:block;min-height:2px;border-radius:2px 2px 1px 1px;background:linear-gradient(180deg,var(--ds-blue-hi),var(--ds-blue));opacity:.9;transform-origin:50% 100%;animation:bar-in .6s var(--spring) backwards}
-.usage-bars i.zero{background:rgba(255,255,255,.08);opacity:1}
-.usage-axis{display:flex;justify-content:space-between;margin-top:4px;font-size:9.5px;color:#4d5468}
-@keyframes bar-in{from{transform:scaleY(0)}}
 .ask{border-color:color-mix(in srgb,#f5b544 30%,transparent);background:linear-gradient(180deg,rgba(245,181,68,.07),rgba(255,255,255,.03));display:flex;flex-direction:column;gap:9px;margin:0}
 .ask-top{display:flex;align-items:center;gap:8px;font-size:11px;color:#f2cf8e}
 .ask-top #ask-title{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}

@@ -15,6 +15,7 @@ contextBridge.exposeInMainWorld('island',{
   approve:(id,outcome)=>ipcRenderer.send('island:approve',id,outcome),
   chat:(id,sessionId,text,mode)=>ipcRenderer.send('island:chat',id,sessionId,text,mode),
   stats:range=>ipcRenderer.send('island:stats',range),
+  balance:()=>ipcRenderer.send('island:balance'),
   onStats:callback=>{const fn=(_event,data)=>callback(data);ipcRenderer.on('island:stats-data',fn);return()=>ipcRenderer.removeListener('island:stats-data',fn);},
   onOpenStats:callback=>{const fn=()=>callback();ipcRenderer.on('island:open-stats',fn);return()=>ipcRenderer.removeListener('island:open-stats',fn);},
   hub:()=>ipcRenderer.send('island:hub'),

@@ -150,6 +150,7 @@ async function start() {
   ipcMain.on('island:hub-select',(event,id)=>{if(trusted(event)&&typeof id==='string'&&id.length<=200&&process.send)process.send({type:'hub/select',id});});
   ipcMain.on('island:hub-new',event=>{if(trusted(event)&&process.send)process.send({type:'hub/new'});});
   ipcMain.on('island:stats',(event,range)=>{if(trusted(event))requestStats(typeof range==='string'?range:statsRange);});
+  ipcMain.on('island:balance',event=>{if(trusted(event)&&process.send)process.send({type:'balance'});});
   ipcMain.on('island:approve',(event,id,outcome)=>{
     if(!trusted(event)||typeof id!=='string'||!['allowed-once','rejected'].includes(outcome))return;
     if(!(activity.approvals||[]).some(a=>a.id===id))return;

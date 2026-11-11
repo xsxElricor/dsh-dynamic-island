@@ -299,14 +299,6 @@ function renderPanel({activity:a,prefs={},history={},balance,preview}){
     $('third-label').textContent=bonus>0?`余额 · 赠 ${sign}${bonus.toFixed(2)}`:'账户余额';
     $('third-tile').title=bonus>0?`另有赠送余额 ${sign}${bonus.toFixed(2)}`:'';
   }else{$('third-value').textContent=tokens(t.tokens||0);$('third-label').textContent='今日 tokens';}
-  const day=history.day;
-  $('usage').hidden=!idle||!day||!day.tokens;
-  if(day&&day.tokens){
-    const cost=history.today?.cost;
-    $('usage-sum').textContent=`${tokens(day.tokens)} tokens${day.cacheRate!=null?` · 缓存命中 ${day.cacheRate}%`:''}${cost>=0.005?` · 今日≈¥${cost.toFixed(2)}`:''}`;
-    const max=Math.max(...day.hours,1),key=day.hours.join(',');
-    if($('usage-bars').dataset.key!==key){$('usage-bars').dataset.key=key;$('usage-bars').replaceChildren(...day.hours.map((v,i)=>{const b=document.createElement('i');if(!v)b.className='zero';b.style.height=v?`${Math.max(8,Math.round(v/max*100))}%`:'';b.style.animationDelay=`${i*18}ms`;b.title=`${tokens(v)} tokens`;return b;}));}
-  }
   $('recent').hidden=!(idle||['completed','paused','error'].includes(state))||!recent.length;
   $('hint').hidden=!idle||preview;
   $('stop').hidden=!a.stoppable;if(!a.stoppable)disarm();
@@ -317,9 +309,9 @@ function renderPanel({activity:a,prefs={},history={},balance,preview}){
   if(approving)$('ask').hidden=true;
   const asking=!approving&&renderAsk();
   const chatting=renderChat();
-  if(approving||asking)for(const id of ['task','others','today','usage','recent','hint','reply','chat'])$(id).hidden=true;
-  // 对话卡里已经有最近的回复；空闲时收起柱状图和最近任务（用量窗口里都有），给输入框留出位置。
-  else if(chatting){$('reply').hidden=true;if(idle)for(const id of ['usage','recent','hint'])$(id).hidden=true;}
+  if(approving||asking)for(const id of ['task','others','today','recent','hint','reply','chat'])$(id).hidden=true;
+  // 对话卡里已经有最近的回复；空闲时收起最近任务，给输入框留出位置。
+  else if(chatting){$('reply').hidden=true;if(idle)for(const id of ['recent','hint'])$(id).hidden=true;}
 }
 
 // 工作区与会话：顶部三个按钮各管一件事——左边只看工作区，中间只看当前工作区的对话，右边在当前工作区新建。
@@ -384,6 +376,7 @@ function openStats(range=statsRange){
   $('panel').dataset.view='stats';
   for(const b of $('stats-range').children)b.setAttribute('aria-selected',String(b.dataset.range===statsRange));
   bridge.stats?.(statsRange);
+  bridge.balance?.();
   renderStats();fitPanel();trackTransition();
 }
 function closeStats(){if(!statsOpen)return;statsOpen=false;delete $('panel').dataset.view;renderStats();fitPanel();trackTransition();}
