@@ -103,10 +103,7 @@ async function start() {
       {label:'大小',submenu:[[.85,'小巧'],[1,'适中'],[1.15,'舒展']].map(([scale,label])=>({label,type:'radio',checked:settings.scale===scale,click:()=>update({scale})}))},
       {label:'减少动态效果',type:'checkbox',checked:settings.motion==='reduced',click:()=>update({motion:settings.motion==='full'?'reduced':'full'})},
       {label:'播放全部状态',click:()=>playDemo()}
-    ]:[{label:'位置与大小：Harness 设置 › 灵动岛',click:openHarness}]),
-    {type:'separator'},
-    {label:'用量统计',click:openStats},
-    {label:'打开 DeepSeek Harness',click:openHarness}
+    ]:[])
   ]);
   await app.whenReady();
   win=new BrowserWindow({width:WIDTH,height:HEIGHT,show:false,frame:false,transparent:true,backgroundColor:'#00000000',hasShadow:false,alwaysOnTop:true,skipTaskbar:true,resizable:false,maximizable:false,minimizable:false,fullscreenable:false,title:'DeepSeek 灵动岛',webPreferences:{preload:path.join(__dirname,'preload.cjs'),contextIsolation:true,nodeIntegration:false,sandbox:true,backgroundThrottling:true}});
