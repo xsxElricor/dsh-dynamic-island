@@ -8,6 +8,17 @@ import { randomUUID } from 'node:crypto';
 const clip = (value, max) => typeof value === 'string' ? value.replace(/[\x00-\x08\x0b\x0c\x0e-\x1f]/g, ' ').trim().slice(0, max) : '';
 const OUTCOMES = new Set(['allowed-once', 'rejected']);
 
+/** Pick one language from a harness localized text ({ en, zh, … }); the island UI is Chinese. */
+export function localizedText(value) {
+  if (typeof value === 'string') return value;
+  if (!value || typeof value !== 'object') return '';
+  let locale = 'zh';
+  try { locale = String(Intl.DateTimeFormat().resolvedOptions().locale || 'zh').toLowerCase().split('-')[0]; } catch {}
+  for (const key of [locale, 'zh', 'en']) { const text = value[key]; if (typeof text === 'string' && text.trim()) return text; }
+  const first = Object.values(value).find(text => typeof text === 'string' && text.trim());
+  return typeof first === 'string' ? first : '';
+}
+
 /** What a tool call wants to do, for display: a command, a file, a URL or a short argument digest. */
 export function summarizeCall(name, argumentsText) {
   let args;
@@ -63,7 +74,9 @@ export class ApprovalDesk {
       original?.addEventListener?.('abort', onAbort, { once: true });
       this.pending.set(id, {
         id, agent: request.agent, sessionId: request.agent.session.id, at: Date.now(),
-        toolName: clip(request.toolName, 60), reason: clip(request.displayReason || request.reason, 300),
+        toolName: clip(request.toolName, 60),
+        // 主窗口显示的「允许本次操作使用 <模式> 权限：<目的>」就在 displayReason 里（多语言对象）。
+        reason: clip(localizedText(request.displayReason) || request.reason, 400),
         detail: callDetail(request.agent.session, request.callId),
         decide: outcome => finish(outcome, true)
       });

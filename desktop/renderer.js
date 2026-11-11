@@ -175,9 +175,18 @@ function renderApprove(){
   if(!a)return false;
   if(!seenApproval.has(a.id))seenApproval.set(a.id,Date.now());
   const details=current.prefs?.details!==false,count=(current.activity.approvals||[]).length;
-  $('approve-title').textContent=`${toolLabel(a.toolName)} 需要你批准`+(details&&a.title?` · ${a.title}`:'');
+  // 越权请求：主窗口的「允许本次操作使用 <模式> 权限：<目的>」拆成标题和目的两行显示。
+  const escalation=/^允许本次操作使用\s+(.+?)\s+权限[：:]\s*([\s\S]+)$/.exec(String(a.reason||''));
+  if(escalation){
+    $('approve-title').textContent=`允许本次操作使用 ${escalation[1]} 权限`;
+    $('approve-reason').textContent=details?escalation[2]:'';
+    $('approve-reason').hidden=!details;
+  }else{
+    $('approve-title').textContent=`${toolLabel(a.toolName)} 需要你批准`+(details&&a.title?` · ${a.title}`:'');
+    $('approve-reason').textContent=a.reason||'Agent 想执行一个需要授权的操作。';
+    $('approve-reason').hidden=false;
+  }
   $('approve-count').textContent=count>1?`还有 ${count-1} 个`:'';
-  $('approve-reason').textContent=a.reason||'Agent 想执行一个需要授权的操作。';
   const detail=details?a.detail:null;
   $('approve-detail').hidden=!detail;
   if(detail){$('approve-label').textContent=detail.label;$('approve-text').textContent=detail.text;$('approve-text').classList.toggle('plain',!detail.mono);}
