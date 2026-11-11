@@ -6,6 +6,8 @@
 // 已超时转为“继续”的问题：通过 ctx.userQuestions.answer() 作为回复送回 Agent（与网页端相同）。
 // 带计划审阅（intent）或附带长说明（detail）的问题留在 Harness 里看全文再答。
 
+import { randomUUID } from 'node:crypto';
+
 const clip = (value, max) => typeof value === 'string' ? value.replace(/[\x00-\x08\x0b\x0c\x0e-\x1f]/g, ' ').trim().slice(0, max) : '';
 
 /** Whether the island can show a question batch faithfully. */
@@ -62,19 +64,21 @@ export class QuestionDesk {
     return this.ctx.on('user-questions/request', function (request, next) { return desk.intercept(request, next); }, { global: true, prepend: true });
   }
   intercept(request, next) {
-    const callId = request?.wait?.callId, signal = request?.signal;
-    this.log('request', { enabled: this.enabled, timed: request?.wait?.timed === true, agent: Boolean(request?.agent?.session), count: request?.questions?.length ?? 0, answerable: answerable(request?.questions) });
-    // Only timed waits: their closing signal retires the other answerer's card when the island wins.
-    if (!this.enabled || request?.wait?.timed !== true || typeof callId !== 'string' || !request.agent?.session || !answerable(request.questions) || signal?.aborted) return next();
+    const callId = typeof request?.wait?.callId === 'string' ? request.wait.callId : null;
+    const signal = request?.signal;
+    this.log('request', { enabled: this.enabled, timed: request?.wait?.timed === true, wait: Boolean(request?.wait), agent: Boolean(request?.agent?.session), count: request?.questions?.length ?? 0, answerable: answerable(request?.questions) });
+    // timed 和 legacy（无 timeout）两种提问都接：timed 用工具给的 callId，legacy 分配一个临时 id。
+    if (!this.enabled || !request?.agent?.session || !answerable(request.questions) || signal?.aborted) return next();
+    const id = callId ?? `live-${randomUUID()}`;
     return new Promise((resolve, reject) => {
       let done = false;
       const finish = (settle, value) => {
         if (done) return;
-        done = true; this.open.delete(callId); signal?.removeEventListener?.('abort', onAbort); this.onChange(); settle(value);
+        done = true; this.open.delete(id); signal?.removeEventListener?.('abort', onAbort); this.onChange(); settle(value);
       };
       const onAbort = () => finish(reject, signal.reason);
       signal?.addEventListener?.('abort', onAbort, { once: true });
-      this.open.set(callId, { callId, agent: request.agent, questions: normalizeQuestions(request.questions), resolve: answers => finish(resolve, { answers }) });
+      this.open.set(id, { callId: id, agent: request.agent, questions: normalizeQuestions(request.questions), resolve: answers => finish(resolve, { answers }) });
       this.onChange();
       let downstream;
       try { downstream = Promise.resolve(next()); } catch (error) { downstream = Promise.reject(error); }
