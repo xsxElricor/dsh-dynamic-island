@@ -41,8 +41,8 @@ function applyShape(){
 }
 function fitPanel(){
   if(!expanded){island.style.height='';bridge.fit?.(0);return;}
-  // 面板需要多高就把灵动岛长多高（主进程据此调整窗口），不再在面板内滚动；底部留 22px 呼吸空间。
-  const want=Math.min(820,$('panel').scrollHeight+84);
+  // 面板需要多高就把灵动岛长多高（主进程据此调整窗口）；头部 72px + 底部 20px 呼吸空间。
+  const want=Math.min(820,$('panel').scrollHeight+92);
   island.style.height=`${want}px`;
   bridge.fit?.(want);
 }

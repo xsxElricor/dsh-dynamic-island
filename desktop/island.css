@@ -41,7 +41,7 @@ button:focus-visible,select:focus-visible,input:focus-visible+.switch{outline:2p
 .island[data-shape="idle"]     {--w:118px;--h:32px;--r:16px;--head:32px; --ls:20px;--lx:10px;--ly:6px;  --ix:6px; --iy:4px; --is:.78;--cx:38px;--cr:36px;--co:0}
 .island[data-shape="compact"]  {--w:212px;--h:36px;--r:18px;--head:36px; --ls:22px;--lx:11px;--ly:7px;  --ix:8px; --iy:6px; --is:.84;--cx:42px;--cr:40px;--co:1}
 .island[data-shape="burst"]    {--w:312px;--h:66px;--r:33px;--head:66px; --ls:34px;--lx:17px;--ly:16px; --ix:19px;--iy:21px;--is:1.1;--cx:62px;--cr:56px;--co:1}
-.island[data-shape="expanded"] {--w:360px;--h:300px;--r:30px;--head:62px; --ls:32px;--lx:19px;--ly:15px; --ix:20px;--iy:19px;--is:1;  --cx:62px;--cr:56px;--co:1}
+.island[data-shape="expanded"] {--w:360px;--h:300px;--r:30px;--head:72px; --ls:32px;--lx:19px;--ly:20px; --ix:20px;--iy:24px;--is:1;  --cx:62px;--cr:56px;--co:1}
 .island[data-shape="v-idle"]   {--w:32px; --h:78px;--r:16px;--head:78px; --ls:20px;--lx:6px; --ly:8px;  --ix:4px; --iy:50px;--is:.78;--cx:32px;--cr:0px; --co:0}
 .island[data-shape="v-compact"]{--w:36px; --h:104px;--r:18px;--head:104px;--ls:22px;--lx:7px; --ly:9px;  --ix:6px; --iy:73px;--is:.84;--cx:36px;--cr:0px; --co:0}
 
@@ -198,7 +198,7 @@ svg.ind{width:24px;height:24px;overflow:visible}
 
 /* ---------- 展开面板：任务控制台 ---------- */
 .island[data-shape="expanded"] .edge-light,.island[data-shape$="idle"] .edge-light{opacity:0!important;transition:none}
-.panel{position:absolute;top:62px;left:16px;width:328px;display:flex;flex-direction:column;gap:10px;
+.panel{position:absolute;top:var(--head);left:16px;width:328px;display:flex;flex-direction:column;gap:10px;
   opacity:0;transform:translateY(10px) scale(.98);transform-origin:50% 0;filter:blur(4px);pointer-events:none;
   transition:opacity .16s,transform .3s var(--out),filter .2s}
 .island[data-expanded="true"] .panel{opacity:1;transform:none;filter:none;pointer-events:auto;transition:opacity .35s .14s,transform .55s .1s var(--spring),filter .35s .14s}
