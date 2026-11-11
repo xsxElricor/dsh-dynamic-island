@@ -11,6 +11,8 @@ const drafts=new Map(),seenAsk=new Set(),seenApproval=new Map(),sentApproval=new
 const BURST={thinking:1700,waiting:3600,completed:3000,error:3800,paused:2200,offline:2600};
 const QUIET=['','idle','completed','paused','error','offline'];
 const VERTICAL=['left-center','right-center','right-upper'];
+// 鼠标离开后的收起延迟：悬停展开的面板给一点缓冲，点击固定的面板留更长时间。
+const PEEK_RETRACT_MS=220,LEAVE_HOVER_MS=1200,LEAVE_PINNED_MS=6000;
 
 const motionOn=()=>current.settings.motion!=='reduced'&&!matchMedia('(prefers-reduced-motion: reduce)').matches;
 const announceBounds=()=>{
@@ -74,8 +76,8 @@ island.addEventListener('mouseenter',()=>{
 });
 island.addEventListener('mouseleave',()=>{
   clearTimeout(peekTimer);clearTimeout(hoverTimer);
-  if(peek){peekTimer=setTimeout(()=>{peek=false;applyShape();},220);}
-  if(expanded)leaveTimer=setTimeout(()=>{if(expanded&&!busyHere())expand(false);},hoverOpened?450:6000);
+  if(peek){peekTimer=setTimeout(()=>{peek=false;applyShape();},PEEK_RETRACT_MS);}
+  if(expanded)leaveTimer=setTimeout(()=>{if(expanded&&!busyHere())expand(false);},hoverOpened?LEAVE_HOVER_MS:LEAVE_PINNED_MS);
 });
 
 $('capsule').addEventListener('click',()=>{autoOpened=false;const pinned=hoverOpened;hoverOpened=false;clearTimeout(hoverTimer);if(pinned&&expanded){applyShape();return;}expand(!expanded);});
