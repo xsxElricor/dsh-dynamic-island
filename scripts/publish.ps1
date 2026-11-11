@@ -1,4 +1,4 @@
-# 一键发布：GitHub（公开仓库 <你的用户名>/dsh-dynamic-island）+ npm（包名 dsh-dynamic-island）。
+# 一键发布到 GitHub（公开仓库 <你的用户名>/dsh-dynamic-island）。不发布 npm。
 # 登录都在浏览器里完成，本脚本不读取、不保存任何密码或令牌。
 $ErrorActionPreference = 'Continue'
 try { [Console]::OutputEncoding = [Text.Encoding]::UTF8 } catch {}
@@ -67,7 +67,7 @@ try {
   git diff --cached --quiet
   if ($LASTEXITCODE -ne 0) { git commit -q -m "DeepSeek Island $version"; if ($LASTEXITCODE -ne 0) { Fail 'git 提交失败。' } }
   $repoExists = { gh repo view $repo *> $null; $LASTEXITCODE -eq 0 }
-  Retry { gh repo create $repo --public --description 'DeepSeek Harness desktop dynamic island plugin (community)' --homepage "https://www.npmjs.com/package/$pkgName" } '创建 GitHub 仓库' $repoExists
+  Retry { gh repo create $repo --public --description 'DeepSeek Harness desktop dynamic island plugin (community)' --homepage "https://github.com/$repo" } '创建 GitHub 仓库' $repoExists
   if (-not $script:RetryOk) { Fail "创建仓库 $repo 失败，请检查网络或代理后重新运行。" }
   git remote get-url origin *> $null
   if ($LASTEXITCODE -ne 0) { git remote add origin "$url.git" }
@@ -78,33 +78,11 @@ try {
   gh repo edit $repo --add-topic deepseek --add-topic deepseek-harness --add-topic dynamic-island --add-topic electron *> $null
   Done "GitHub：$url"
 
-  Step '登录 npm（浏览器）'
-  npm whoami --registry $reg *> $null
-  if ($LASTEXITCODE -ne 0) {
-    npm login --auth-type=web --registry $reg
-    if ($LASTEXITCODE -ne 0) { Fail 'npm 登录没有完成。' }
-  }
-  $npmUser = (npm whoami --registry $reg).Trim()
-  Done "已登录：$npmUser"
-
-  Step "发布 $pkgName@$version 到 npm"
-  $existing = (npm view "$pkgName@$version" version --registry $reg 2>$null)
-  if ($existing) {
-    Done "npm 上已经有 $version，跳过发布。"
-  } else {
-    $owner = (npm view $pkgName maintainers --registry $reg 2>$null)
-    if ($owner -and ($owner -notmatch [regex]::Escape($npmUser))) { Fail "npm 上的 $pkgName 属于别人，请把 package.json 的 name 改成例如 @$npmUser/$pkgName 后重试。" }
-    $published = { $v = (npm view "$pkgName@$version" version --registry $reg 2>$null); [bool]$v }
-    Retry { npm publish --access public --registry $reg } '发布到 npm' $published
-    if (-not $script:RetryOk) { Fail 'npm 发布失败（如果开启了两步验证，请按提示在浏览器里确认后重新运行）。' }
-  }
-  Done "npm：https://www.npmjs.com/package/$pkgName"
-
   Write-Host ''
-  Write-Host '全部完成！' -ForegroundColor Green
+  Write-Host 'GitHub 发布完成（未发布 npm）。' -ForegroundColor Green
   Write-Host "  GitHub  $url"
-  Write-Host "  npm     https://www.npmjs.com/package/$pkgName"
-  Write-Host "  别人可以在 Harness 的「插件 › 添加插件」里输入 $pkgName 安装。"
+  Write-Host "  Release  https://github.com/$repo/releases/tag/v$version"
+  Write-Host '  安装：下载仓库后双击「安装到 Harness.cmd」，或用 dsh plugin --profile desktop add <tgz>。'
 } catch {
   Write-Host ''
   Write-Host "没有完成：$($_.Exception.Message)" -ForegroundColor Red

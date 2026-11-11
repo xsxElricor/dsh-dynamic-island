@@ -39,9 +39,17 @@ DeepSeek Harness 的桌面灵动岛插件：像 iPhone 灵动岛一样停在屏�
 
 需要 **DeepSeek Harness 桌面版 0.2.2-rc.1**（Windows）。
 
-- **在 Harness 里安装**：侧栏「插件」→「添加插件」，输入 `dsh-dynamic-island`，安装后启用。
-- **命令行**：先从托盘退出 Harness，再运行 `dsh plugin --profile desktop add dsh-dynamic-island`。
-- **从源码**：克隆本仓库，双击 **安装到 Harness.cmd**。
+本插件目前通过 GitHub 发布（暂未发布到 npm）：
+
+- **一键安装**：下载本仓库（或 `git clone`），双击 **安装到 Harness.cmd**。脚本会询问是否关闭 Harness，装完自动重新打开。
+- **命令行**：先从托盘退出 Harness，再在仓库目录运行：
+
+  ```powershell
+  powershell -NoProfile -ExecutionPolicy Bypass -File scripts/install-harness.ps1
+  ```
+
+  脚本会在 `artifacts/` 下生成 `dsh-dynamic-island-0.1.0.tgz`，再用 Harness 随附的 `dsh plugin --profile desktop add` 安装。
+- **已打包的 tgz**：也可以直接运行 `dsh plugin --profile desktop add artifacts\dsh-dynamic-island-0.1.0.tgz`。
 
 装好后，位置、大小等选项在 Harness 的「设置 › 灵动岛」中调整。
 
