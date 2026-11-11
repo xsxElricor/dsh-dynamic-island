@@ -36,6 +36,22 @@
       </button>
 
       <section id="panel" class="panel" inert aria-label="任务详情">
+        <div id="hubbar" class="hubbar" hidden>
+          <button id="hub-ws" type="button" class="hub-ws" title="切换工作区"><span id="hub-ws-name">工作区</span><span class="hub-caret" aria-hidden="true">▾</span></button>
+          <button id="hub-current" type="button" class="hub-current" title="切换对话"><span id="hub-current-title">选择对话</span></button>
+          <button id="hub-new" type="button" class="hub-new" title="新聊天" aria-label="新聊天">＋</button>
+        </div>
+        <div id="hublist" class="hublist" hidden>
+          <div class="hub-head">
+            <button id="hub-back" type="button" class="hub-back" aria-label="返回">←</button>
+            <span class="hub-head-title">对话</span>
+            <button id="hub-new2" type="button" class="hub-new hub-new-wide">＋ 新聊天</button>
+          </div>
+          <div id="hub-ws-tabs" class="hub-ws-tabs" role="tablist" aria-label="工作区"></div>
+          <ul id="hub-rows" class="hub-rows"></ul>
+          <p id="hub-empty" class="hub-empty" hidden>这个工作区还没有对话，点「新聊天」开始。</p>
+          <p id="hub-note" class="hub-note" hidden></p>
+        </div>
         <form id="approve" class="card ask approve" hidden autocomplete="off">
           <div class="ask-top"><span class="ask-dot" aria-hidden="true"></span><span id="approve-title">需要你批准</span><span id="approve-count" class="num"></span></div>
           <p id="approve-reason" class="ask-q"></p>

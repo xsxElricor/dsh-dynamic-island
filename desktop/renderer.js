@@ -3,7 +3,7 @@ import {STATES} from '../src/state.js';
 const $=id=>document.getElementById(id);
 const island=$('island'),stage=$('stage'),bridge=window.island;
 let current={activity:{state:'idle'},settings:{position:'top-center',scale:1,motion:'full'}};
-let expanded=false,peek=false,burstUntil=0,lastState='',boundsFrame,burstTimer,peekTimer,leaveTimer,armTimer,hoverTimer,listKey='',autoOpened=false,hoverOpened=false,lastReply='';
+let expanded=false,peek=false,burstUntil=0,lastState='',boundsFrame,burstTimer,peekTimer,leaveTimer,armTimer,hoverTimer,listKey='',autoOpened=false,hoverOpened=false,lastReply='',hubOpen=false;
 const drafts=new Map(),seenAsk=new Set(),seenApproval=new Map(),sentApproval=new Map();
 
 // 出现时短暂"弹出"以示提醒；思考仅在新任务开始时弹出。
@@ -42,7 +42,7 @@ function fitPanel(){island.style.height=expanded?`${Math.min(innerHeight-24,$('p
 
 function expand(value){
   expanded=value;peek=false;clearTimeout(peekTimer);clearTimeout(hoverTimer);
-  if(!value)hoverOpened=false;
+  if(!value){hoverOpened=false;hubOpen=false;delete $('panel').dataset.view;}
   island.dataset.expanded=String(value);
   $('capsule').setAttribute('aria-expanded',String(value));
   $('capsule').setAttribute('aria-label',value?'收起 DeepSeek 灵动岛':'展开 DeepSeek 灵动岛');
@@ -72,7 +72,7 @@ island.addEventListener('mouseleave',()=>{
 });
 
 $('capsule').addEventListener('click',()=>{autoOpened=false;const pinned=hoverOpened;hoverOpened=false;clearTimeout(hoverTimer);if(pinned&&expanded){applyShape();return;}expand(!expanded);});
-document.addEventListener('keydown',e=>{if(e.key==='Escape'&&expanded)expand(false);});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(hubOpen){closeHub();return;}if(expanded)expand(false);}});
 // 点击灵动岛以外的地方即收起：按下时让窗口拿到焦点，失焦时收起（提问草稿保留，重新展开可继续）。
 island.addEventListener('pointerdown',()=>bridge.engage?.(),true);
 function dismiss(){
@@ -312,6 +312,58 @@ function renderPanel({activity:a,prefs={},history={},balance,preview}){
   else if(chatting){$('reply').hidden=true;if(idle)for(const id of ['usage','recent','hint'])$(id).hidden=true;}
 }
 
+// 工作区与会话：展开面板顶部一条栏，点开后是工作区标签和对话列表；选中的对话成为灵动岛当前对象。
+const hubState=()=>current.activity?.hub;
+function renderHub(){
+  const h=hubState(),bar=$('hubbar'),list=$('hublist');
+  if(!h?.workspaces?.length){bar.hidden=true;list.hidden=true;return;}
+  bar.hidden=false;
+  const ws=h.workspaces.find(w=>w.id===h.workspaceId),cur=h.current;
+  $('hub-ws-name').textContent=ws?.title||'工作区';
+  $('hub-current-title').textContent=cur?.title||'选择对话';
+  $('hub-current').dataset.running=String(!!cur?.running);
+  list.hidden=!hubOpen;
+  if(!hubOpen)return;
+  const tabs=h.workspaces.map(w=>`${w.id}|${w.title}`).join('~');
+  if($('hub-ws-tabs').dataset.key!==tabs){
+    $('hub-ws-tabs').dataset.key=tabs;
+    $('hub-ws-tabs').replaceChildren(...h.workspaces.map(w=>{
+      const b=document.createElement('button');b.type='button';b.className='hub-chip';b.dataset.id=w.id;
+      b.setAttribute('role','tab');b.setAttribute('aria-selected',String(w.id===h.workspaceId));b.textContent=w.title;return b;}));
+  }else for(const chip of $('hub-ws-tabs').children)chip.setAttribute('aria-selected',String(chip.dataset.id===h.workspaceId));
+  const rows=h.rows.map(r=>`${r.id}|${r.title}|${r.at}|${r.running?1:0}`).join('~')+`#${cur?.id||''}`;
+  if($('hub-rows').dataset.key!==rows){
+    $('hub-rows').dataset.key=rows;
+    $('hub-rows').replaceChildren(...h.rows.map(r=>{
+      const li=document.createElement('li');li.className='hub-row';li.dataset.id=r.id;li.setAttribute('aria-current',String(r.id===cur?.id));
+      const dot=document.createElement('span');dot.className='hub-row-dot';dot.dataset.running=String(!!r.running);
+      const title=document.createElement('span');title.className='hub-row-title';title.textContent=r.title;
+      const at=document.createElement('span');at.className='hub-row-at';at.textContent=r.at?ago(r.at):'';
+      li.append(dot,title,at);return li;}));
+  }
+  $('hub-empty').hidden=!!h.rows.length;
+  $('hub-note').hidden=!h.note;$('hub-note').textContent=h.note||'';
+}
+function openHub(){hubOpen=true;$('panel').dataset.view='hub';bridge.hub?.();renderHub();fitPanel();trackTransition();}
+function closeHub(){if(!hubOpen)return;hubOpen=false;delete $('panel').dataset.view;renderHub();fitPanel();trackTransition();}
+function newChat(){closeHub();bridge.hubNew?.();}
+$('hub-current').addEventListener('click',()=>hubOpen?closeHub():openHub());
+$('hub-ws').addEventListener('click',()=>hubOpen?closeHub():openHub());
+$('hub-back').addEventListener('click',closeHub);
+$('hub-new').addEventListener('click',newChat);
+$('hub-new2').addEventListener('click',newChat);
+$('hub-ws-tabs').addEventListener('click',event=>{
+  const chip=event.target.closest('[data-id]');if(!chip)return;
+  const h=hubState();if(h)h.workspaceId=chip.dataset.id;
+  $('hub-ws-tabs').dataset.key='';renderHub();bridge.hubWorkspace?.(chip.dataset.id);
+});
+$('hub-rows').addEventListener('click',event=>{
+  const row=event.target.closest('[data-id]');if(!row)return;
+  const h=hubState(),picked=h?.rows?.find(r=>r.id===row.dataset.id);
+  if(h&&picked)h.current={id:picked.id,title:picked.title,at:picked.at,running:picked.running};
+  closeHub();bridge.hubSelect?.(row.dataset.id);
+});
+
 // 状态切换：文字与指示器做模糊交叉淡入，异常时整体轻摇。
 function choreograph(state,prev){
   if(!motionOn()||!prev)return;
@@ -344,6 +396,7 @@ function render(snapshot){
   $('badge').hidden=!(a.activeCount>1);$('badge').textContent=a.activeCount>1?String(a.activeCount):'';
   $('demo-controls').hidden=!preview;$('demo-state').value=state;
   renderPanel(snapshot);
+  renderHub();
 
   for(const id of drafts.keys())if(!(a.questions||[]).some(q=>q.callId===id))drafts.delete(id);
   for(const id of [...seenApproval.keys()])if(!(a.approvals||[]).some(x=>x.id===id)){seenApproval.delete(id);sentApproval.delete(id);}

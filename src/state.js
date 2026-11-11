@@ -117,8 +117,11 @@ export class ActivityStore {
     if (c.type === 'text-delta' || c.type === 'block-start' && c.blockType === 'text') this.set(id, 'streaming');
     if (c.type === 'tool-call-delta') this.set(id, 'tools');
   }
-  /** @param include - which sessions count as user tasks; others show only while they need the user. */
-  snapshot(include = () => true) {
+  /**
+   * @param include - which sessions count as user tasks; others show only while they need the user.
+   * @param preferId - the session the user picked in the island; it wins over resting tasks but yields to one that waits for the user.
+   */
+  snapshot(include = () => true, preferId = null) {
     const now = this.now();
     for (const [id,e] of this.sessions) {
       if (['completed','paused'].includes(e.state) && now - e.updated > 6500) e.state = 'idle';
@@ -127,7 +130,11 @@ export class ActivityStore {
     }
     const shown = e => include(e.id) || ['waiting','error'].includes(e.state);
     const rows = [...this.sessions.values()].filter(e => e.state !== 'idle' && shown(e)).sort((a,b) => (priority[b.state] ?? 0) - (priority[a.state] ?? 0) || b.updated - a.updated);
-    const e = rows[0];
+    let e = rows[0];
+    if (preferId) {
+      const picked = this.sessions.get(preferId);
+      if (picked && (!e || (priority[e.state] ?? 0) < 90)) e = picked;
+    }
     const todos = e?.todos ?? [];
     return {
       state: e?.state ?? 'idle', title: e?.title ?? '', sessionId: e?.id ?? null,

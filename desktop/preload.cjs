@@ -15,5 +15,9 @@ contextBridge.exposeInMainWorld('island',{
   approve:(id,outcome)=>ipcRenderer.send('island:approve',id,outcome),
   chat:(id,sessionId,text,mode)=>ipcRenderer.send('island:chat',id,sessionId,text,mode),
   stats:()=>ipcRenderer.send('island:stats'),
+  hub:()=>ipcRenderer.send('island:hub'),
+  hubWorkspace:id=>ipcRenderer.send('island:hub-workspace',id),
+  hubSelect:id=>ipcRenderer.send('island:hub-select',id),
+  hubNew:()=>ipcRenderer.send('island:hub-new'),
   preview:state=>ipcRenderer.send('island:preview',state)
 });

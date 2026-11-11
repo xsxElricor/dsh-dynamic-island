@@ -10,6 +10,7 @@ import { QuestionDesk } from './questions.js';
 import { ApprovalDesk } from './approvals.js';
 import { UsageLedger } from './usage.js';
 import { ChatDesk } from './chat.js';
+import { SessionHub } from './hub.js';
 
 export { Config };
 export const name = 'dsh-island';
@@ -57,7 +58,9 @@ function contextFromProjection(ctx, sessionId) {
 export function islandSnapshot(ctx, store, known, desk, extra = {}) {
   const roots = rootsOf(ctx);
   for (const agent of roots) if (agent?.session?.id) known.add(agent.session.id);
-  const data = store.snapshot(id => known.size === 0 || known.has(id));
+  const focus = extra.hub?.sessionId;
+  if (focus) known.add(focus);
+  const data = store.snapshot(id => known.size === 0 || known.has(id), focus);
   const title = id => store.sessions.get(id)?.title ?? '';
   data.questions = desk ? desk.list(roots).map(q => ({ ...q, title: title(q.sessionId) })) : [];
   data.approvals = extra.approvals ? extra.approvals.list().map(a => ({ ...a, title: title(a.sessionId) })) : [];
@@ -72,6 +75,7 @@ export function islandSnapshot(ctx, store, known, desk, extra = {}) {
   // 继续对话的目标：当前显示的任务，或最近一个顶层任务（不会是子智能体）。
   const chat = extra.chat?.target(store, known, data.sessionId);
   data.chat = chat ? (extra.prefs?.details === false ? { ...chat, title: '', reply: '' } : chat) : null;
+  if (extra.hub) data.hub = extra.hub.view();
   return data;
 }
 
@@ -131,13 +135,25 @@ export function apply(ctx, config = {}) {
     const send = () => {
       pending = undefined;
       if (stopped || !child?.connected) return;
-      const data=islandSnapshot(ctx,store,known,desk,{approvals,chat,prefs,usage:usageNow()}), encoded=JSON.stringify(data);
+      const data=islandSnapshot(ctx,store,known,desk,{approvals,chat,prefs,hub,usage:usageNow()}), encoded=JSON.stringify(data);
       if(encoded===last)return;
       last=encoded;
       child.send({type:'activity',data}, error=>{ if(error) last=''; });
     };
     const publish = () => { if(!pending) pending=setTimeout(send,80); };
     const detach=attachActivity(ctx,store,publish);
+    // 工作区与会话中枢：只在收到灵动岛请求时读取，之后每 20 秒跟随一次运行状态。
+    const hub = new SessionHub(ctx, {
+      dataDir, prefs,
+      publish: () => publish(),
+      seed: (id, meta) => {
+        known.add(id);
+        const entry = store.entry(id);
+        if (entry && !entry.title && meta?.title) entry.title = meta.title;
+      }
+    });
+    hub.refresh(true);
+    const hubTimer = setInterval(() => hub.refresh().then(() => publish()), 20000); hubTimer.unref?.();
     // Settings edited in Harness arrive as volatile updates; forward them without restarting the window.
     let balanceAt = 0, balanceBusy = false;
     const refreshBalance = async (force = false) => {
@@ -152,7 +168,7 @@ export function apply(ctx, config = {}) {
       const next = readPrefs(config);
       if (next.enabled && !prefs.enabled) message({ type: 'show' });
       const balanceChanged = next.balance !== prefs.balance;
-      prefs = next; desk.enabled = prefs.questions; approvals.enabled = prefs.approvals; chat.enabled = prefs.chat; message({ type: 'prefs', data: prefs }); publish();
+      prefs = next; hub.prefs = next; desk.enabled = prefs.questions; approvals.enabled = prefs.approvals; chat.enabled = prefs.chat; message({ type: 'prefs', data: prefs }); publish();
       if (balanceChanged) refreshBalance(true);
     });
     try {
@@ -163,7 +179,12 @@ export function apply(ctx, config = {}) {
       child.on('error',error=>ctx.logger.warn(`灵动岛启动失败：${error.message}`));
       child.on('message',msg=>{
         if(msg?.type==='ready'){ last=''; message({ type: 'prefs', data: prefs }); send(); setTimeout(() => refreshBalance(true), 3000).unref?.(); }
-        if(msg?.type==='panel-open') refreshBalance();
+        if(msg?.type==='panel-open'){ refreshBalance(); hub.refresh(true).then(() => publish()); }
+        // 工作区 / 会话：列表按需刷新，选中即成为灵动岛当前对话。
+        if(msg?.type==='hub') hub.refresh(true).then(() => publish());
+        if(msg?.type==='hub/workspace' && typeof msg.id==='string') hub.selectWorkspace(msg.id).catch(error => message({ type: 'hub-error', reason: error?.message ?? '切换工作区失败' }));
+        if(msg?.type==='hub/select' && typeof msg.id==='string') hub.focus(msg.id).then(result => { if(!result.ok) message({ type: 'hub-error', reason: result.reason }); }).catch(error => message({ type: 'hub-error', reason: error?.message ?? '切换会话失败' }));
+        if(msg?.type==='hub/new') hub.create().then(result => { if(!result.ok) message({ type: 'hub-error', reason: result.reason }); }).catch(error => message({ type: 'hub-error', reason: error?.message ?? '新建会话失败' }));
         if(msg?.type==='answer' && typeof msg.callId==='string'){ const result = desk.answer(msg.callId, msg.answers, rootsOf(ctx)); message({ type: 'answer-result', callId: msg.callId, ...result }); publish(); }
         if(msg?.type==='stop' && stopSession(ctx, msg.sessionId)) publish();
         if(msg?.type==='approve' && typeof msg.id==='string'){ const result = approvals.decide(msg.id, msg.outcome); message({ type: 'approval-result', id: msg.id, ...result }); publish(); }
@@ -174,6 +195,6 @@ export function apply(ctx, config = {}) {
     } catch(error) { ctx.logger.warn(error.message); }
     const timer=setInterval(publish,1000); timer.unref();
     const balanceTimer=setInterval(() => refreshBalance(true), 10 * 60000); balanceTimer.unref();
-    return () => { stopped=true; detach(); offDesk?.(); offApprovals?.(); offLedger?.(); backfillAbort.abort(); clearTimeout(backfillFirst); clearInterval(backfillTimer); ledger.save(); offSettings?.(); clearInterval(timer); clearInterval(balanceTimer); clearTimeout(pending); if(child?.connected)child.send({type:'shutdown'}); setTimeout(()=>{if(child?.exitCode===null)child.kill();},1500).unref(); };
+    return () => { stopped=true; detach(); offDesk?.(); offApprovals?.(); offLedger?.(); backfillAbort.abort(); clearTimeout(backfillFirst); clearInterval(backfillTimer); ledger.save(); offSettings?.(); clearInterval(timer); clearInterval(balanceTimer); clearInterval(hubTimer); clearTimeout(pending); if(child?.connected)child.send({type:'shutdown'}); setTimeout(()=>{if(child?.exitCode===null)child.kill();},1500).unref(); };
   });
 }

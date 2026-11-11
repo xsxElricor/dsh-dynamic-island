@@ -4,7 +4,7 @@ import { dirname, join } from 'node:path';
 // 灵动岛在 Harness「设置 › 灵动岛」中的选项。字段都是 volatile：修改后即时生效，不重启插件。
 export const POSITIONS = ['top-center', 'top-left', 'top-right', 'left-center', 'right-center', 'bottom-center'];
 export const SIZES = { small: 0.85, medium: 1, large: 1.15 };
-export const DEFAULT_PREFS = { enabled: true, position: 'top-center', size: 'medium', reduceMotion: false, popups: true, details: true, balance: true, questions: true, approvals: true, chat: true, hoverExpand: true };
+export const DEFAULT_PREFS = { enabled: true, position: 'top-center', size: 'medium', reduceMotion: false, popups: true, details: true, balance: true, questions: true, approvals: true, chat: true, hoverExpand: true, sessions: true };
 
 async function loadSchemastery() {
   try { const m = await import('@deepseek-ai/schemastery'); return m.default ?? m; } catch {}
@@ -32,6 +32,7 @@ export const Config = z ? z.object({
   approvals: z.boolean().default(true).description('在灵动岛中批准或拒绝权限请求').volatile(),
   chat: z.boolean().default(true).description('在灵动岛中给 Agent 发消息').volatile(),
   hoverExpand: z.boolean().default(true).description('鼠标停留时直接展开面板').volatile(),
+  sessions: z.boolean().default(true).description('在灵动岛切换工作区、选择对话或新建对话').volatile(),
   allowStandalone: z.boolean().default(false).hidden(),
   dataDir: z.string().hidden()
 }) : undefined;
@@ -47,6 +48,6 @@ export function readPrefs(config = {}) {
   }
   if (!POSITIONS.includes(prefs.position)) prefs.position = DEFAULT_PREFS.position;
   if (!Object.hasOwn(SIZES, prefs.size)) prefs.size = DEFAULT_PREFS.size;
-  for (const key of ['enabled', 'reduceMotion', 'popups', 'details', 'balance', 'questions', 'approvals', 'chat', 'hoverExpand']) prefs[key] = prefs[key] !== false && prefs[key] !== 'false' ? Boolean(prefs[key]) : false;
+  for (const key of ['enabled', 'reduceMotion', 'popups', 'details', 'balance', 'questions', 'approvals', 'chat', 'hoverExpand', 'sessions']) prefs[key] = prefs[key] !== false && prefs[key] !== 'false' ? Boolean(prefs[key]) : false;
   return prefs;
 }

@@ -153,6 +153,11 @@ async function start() {
     if(process.send)process.send({type:'chat',id,sessionId,text,mode:how});
   });
   ipcMain.on('island:panel',event=>{if(trusted(event)&&process.send)process.send({type:'panel-open'});});
+  // 工作区与会话：请 Harness 侧刷新列表、切换工作区、选中对话或新建对话。
+  ipcMain.on('island:hub',event=>{if(trusted(event)&&process.send)process.send({type:'hub'});});
+  ipcMain.on('island:hub-workspace',(event,id)=>{if(trusted(event)&&typeof id==='string'&&id.length<=200&&process.send)process.send({type:'hub/workspace',id});});
+  ipcMain.on('island:hub-select',(event,id)=>{if(trusted(event)&&typeof id==='string'&&id.length<=200&&process.send)process.send({type:'hub/select',id});});
+  ipcMain.on('island:hub-new',event=>{if(trusted(event)&&process.send)process.send({type:'hub/new'});});
   ipcMain.on('island:stats',event=>{if(trusted(event))openStats();});
   ipcMain.on('stats:request',(event,range)=>{if(statsWin&&event.sender===statsWin.webContents&&event.senderFrame===statsWin.webContents.mainFrame)requestStats(range);});
   ipcMain.on('island:approve',(event,id,outcome)=>{
@@ -219,6 +224,7 @@ async function start() {
     if(message?.type==='approval-result'&&typeof message.id==='string'){approvalResults={...Object.fromEntries(Object.entries(approvalResults).filter(([,r])=>Date.now()-r.at<300000)),[message.id]:{ok:!!message.ok,reason:String(message.reason||'').slice(0,80),at:Date.now()}};send();}
     if(message?.type==='stats'&&statsWin&&!statsWin.isDestroyed())statsWin.webContents.send('stats:data',message.data??null);
     if(message?.type==='balance'){balance=message.data&&Array.isArray(message.data.wallets)?message.data:null;send();}
+    if(message?.type==='hub-error'){activity={...activity,hub:{...(activity.hub||{}),note:String(message.reason||'').slice(0,120)}};send();}
     if(message?.type==='activity'&&Object.hasOwn(STATES,message.data?.state)){activity=message.data;remember(activity.finished);send();}
   });
   // Losing the owning Harness process cannot leave an orphan overlay behind.

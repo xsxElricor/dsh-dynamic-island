@@ -369,6 +369,41 @@ select{border:1px solid rgba(255,255,255,.1);border-radius:7px;background:#151b2
 @keyframes halo-strong{0%,100%{opacity:.45}50%{opacity:1}}
 @keyframes halo-flash{0%{opacity:0}25%{opacity:1}100%{opacity:.3}}
 
+/* ---------- 工作区 & 会话栏 ---------- */
+.hubbar{display:flex;align-items:center;gap:6px;height:30px;padding:0 2px}
+.hubbar button{height:28px;border-radius:9px;font-size:11.5px;color:#d6dcee;padding:0 8px;display:inline-flex;align-items:center;gap:5px;min-width:0}
+.hubbar button:hover{background:rgba(255,255,255,.06)}
+.hub-ws{flex:none;max-width:104px;color:var(--muted)}
+#hub-ws-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hub-caret{font-size:9px;opacity:.7}
+.hub-current{flex:1;min-width:0;justify-content:flex-start;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.05);font-weight:600}
+.hub-current span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hub-current::before{content:"";flex:none;width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.22)}
+.hub-current[data-running="true"]::before{background:var(--ds-blue);box-shadow:0 0 0 0 var(--ds-blue);animation:live 2s ease-out infinite}
+.hub-new{flex:none;width:28px;justify-content:center;font-size:16px;font-weight:600;color:var(--ds-blue-soft);background:rgba(77,107,254,.14)}
+.hub-new:hover{background:rgba(77,107,254,.24)}
+.hub-new-wide{width:auto;padding:0 10px;font-size:11.5px;gap:4px}
+.hublist{display:flex;flex-direction:column;gap:8px;max-height:324px}
+.hub-head{display:flex;align-items:center;gap:8px}
+.hub-back{width:26px;height:26px;border-radius:8px;color:var(--muted);font-size:14px}
+.hub-back:hover{background:rgba(255,255,255,.06);color:#e5e9f7}
+.hub-head-title{flex:1;font-size:12px;font-weight:600;color:#eef1fb}
+.hub-ws-tabs{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px;scrollbar-width:none}
+.hub-ws-tabs::-webkit-scrollbar{display:none}
+.hub-chip{flex:none;height:26px;padding:0 10px;border-radius:8px;font-size:11px;color:var(--muted);background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.05);white-space:nowrap}
+.hub-chip[aria-selected="true"]{color:#fff;background:color-mix(in srgb,var(--ds-blue) 26%,transparent);border-color:color-mix(in srgb,var(--ds-blue) 45%,transparent)}
+.hub-rows{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px;overflow-y:auto;overscroll-behavior:contain}
+.hub-row{display:flex;align-items:center;gap:8px;padding:7px 9px;border-radius:10px;font-size:11.5px;color:#d6dcee;cursor:pointer}
+.hub-row:hover{background:rgba(255,255,255,.05)}
+.hub-row[aria-current="true"]{background:rgba(77,107,254,.14)}
+.hub-row-dot{flex:none;width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.18)}
+.hub-row-dot[data-running="true"]{background:var(--ds-blue);box-shadow:0 0 6px var(--ds-blue)}
+.hub-row-title{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hub-row-at{flex:none;font-size:10px;color:var(--faint);font-variant-numeric:tabular-nums}
+.hub-empty{margin:2px 0 0;font-size:11px;color:var(--faint);text-align:center;padding:14px 0}
+.hub-note{margin:0;font-size:10.5px;line-height:1.4;color:#ffb4b4}
+#panel[data-view="hub"] > :not(#hubbar):not(#hublist){display:none!important}
+
 /* ---------- 减少动效 ---------- */
 body[data-motion="reduced"] *,body[data-motion="reduced"] *::before,body[data-motion="reduced"] *::after{animation:none!important;transition-duration:.08s!important;transition-delay:0s!important}
 body[data-motion="reduced"] .ind-completed .tick{stroke-dashoffset:0}
