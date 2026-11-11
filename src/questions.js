@@ -69,16 +69,22 @@ export class QuestionDesk {
     this.log('request', { enabled: this.enabled, timed: request?.wait?.timed === true, wait: Boolean(request?.wait), agent: Boolean(request?.agent?.session), count: request?.questions?.length ?? 0, answerable: answerable(request?.questions) });
     // timed 和 legacy（无 timeout）两种提问都接：timed 用工具给的 callId，legacy 分配一个临时 id。
     if (!this.enabled || !request?.agent?.session || !answerable(request.questions) || signal?.aborted) return next();
+    // 换成一个「原信号 或 灵动岛已作答」的组合信号：灵动岛先答时撤销它，Harness 网页端的提问卡随之撤下。
+    const retire = new AbortController();
+    const combined = signal ? AbortSignal.any([signal, retire.signal]) : retire.signal;
+    try { request.signal = combined; } catch { return next(); }
+    if (request.signal !== combined) return next();
     const id = callId ?? `live-${randomUUID()}`;
     return new Promise((resolve, reject) => {
       let done = false;
-      const finish = (settle, value) => {
+      const finish = (settle, value, fromIsland = false) => {
         if (done) return;
-        done = true; this.open.delete(id); signal?.removeEventListener?.('abort', onAbort); this.onChange(); settle(value);
+        done = true; this.open.delete(id); combined.removeEventListener?.('abort', onAbort); this.onChange(); settle(value);
+        if (fromIsland) retire.abort(new Error('answered in the island'));
       };
-      const onAbort = () => finish(reject, signal.reason);
-      signal?.addEventListener?.('abort', onAbort, { once: true });
-      this.open.set(id, { callId: id, agent: request.agent, questions: normalizeQuestions(request.questions), resolve: answers => finish(resolve, { answers }) });
+      const onAbort = () => finish(reject, combined.reason ?? new Error('cancelled'));
+      combined.addEventListener?.('abort', onAbort, { once: true });
+      this.open.set(id, { callId: id, agent: request.agent, questions: normalizeQuestions(request.questions), resolve: answers => finish(resolve, { answers }, true) });
       this.onChange();
       let downstream;
       try { downstream = Promise.resolve(next()); } catch (error) { downstream = Promise.reject(error); }
