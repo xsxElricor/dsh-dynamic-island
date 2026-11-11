@@ -103,6 +103,8 @@ export class SessionHub {
     const owned = ws ? ws.members : new Set();
     const sameCwd = ws ? normalize(ws.path) : '';
     const rows = this.summaries
+      // 空会话（还没发过消息）不进列表，避免历史残留把列表撑乱；它们仍可在 Harness 里打开。
+      .filter(s => !s.blank)
       .filter(s => !ws || owned.has(s.id) || (sameCwd && normalize(s.cwd) === sameCwd))
       .sort((a, b) => b.at - a.at)
       .slice(0, MAX_ROWS)
@@ -122,7 +124,8 @@ export class SessionHub {
       running: this.runningOf(this.sessionId)
     } : null;
     return {
-      workspaces: this.workspaces.map(w => ({ id: w.id, title: details && w.title ? w.title : '工作区', path: details ? w.path : '' })),
+      // 工作区名是导航信息，始终显示；对话标题仍受「显示任务内容」控制。
+      workspaces: this.workspaces.map(w => ({ id: w.id, title: w.title || '工作区', path: details ? w.path : '', count: this.countIn(w) })),
       workspaceId: this.workspaceId,
       current,
       rows: this.rows.map(r => ({ id: r.id, title: name(r.title), at: r.at, running: r.running, blank: r.blank })),
@@ -130,6 +133,11 @@ export class SessionHub {
       note: this.note,
       at: this.at
     };
+  }
+
+  countIn(workspace) {
+    const sameCwd = normalize(workspace.path);
+    return this.summaries.filter(s => !s.blank && (workspace.members.has(s.id) || (sameCwd && normalize(s.cwd) === sameCwd))).length;
   }
 
   #save() {
