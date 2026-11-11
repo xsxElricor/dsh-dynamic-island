@@ -53,8 +53,8 @@ export class QuestionDesk {
    * @param ctx - plugin context (events, `get('sessionProjections')`, `get('userQuestions')`).
    * @param onChange - called whenever the set of answerable questions changes.
    */
-  constructor(ctx, onChange = () => {}) {
-    this.ctx = ctx; this.onChange = onChange; this.open = new Map(); this.enabled = true; this.answered = new Map();
+  constructor(ctx, onChange = () => {}, log = () => {}) {
+    this.ctx = ctx; this.onChange = onChange; this.log = log; this.open = new Map(); this.enabled = true; this.answered = new Map();
   }
   /** Join the answerer waterfall ahead of Harness's own UI. @returns the listener disposer. */
   attach() {
@@ -63,6 +63,7 @@ export class QuestionDesk {
   }
   intercept(request, next) {
     const callId = request?.wait?.callId, signal = request?.signal;
+    this.log('request', { enabled: this.enabled, timed: request?.wait?.timed === true, agent: Boolean(request?.agent?.session), count: request?.questions?.length ?? 0, answerable: answerable(request?.questions) });
     // Only timed waits: their closing signal retires the other answerer's card when the island wins.
     if (!this.enabled || request?.wait?.timed !== true || typeof callId !== 'string' || !request.agent?.session || !answerable(request.questions) || signal?.aborted) return next();
     return new Promise((resolve, reject) => {

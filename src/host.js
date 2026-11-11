@@ -111,7 +111,7 @@ export function apply(ctx, config = {}) {
     const store = new ActivityStore(), known = new Set();
     const env={...process.env}; delete env.ELECTRON_RUN_AS_NODE;
     const dataDir = read('dataDir') || join(env.DSH_HOME || join(homedir(),'.dsh'),'dsh-island');
-    const desk = new QuestionDesk(ctx, () => publish());
+    const desk = new QuestionDesk(ctx, () => publish(), (...args) => hub.log('ask', ...args));
     desk.enabled = prefs.questions;
     const offDesk = desk.attach();
     const approvals = new ApprovalDesk(ctx, () => publish());
