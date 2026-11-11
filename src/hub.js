@@ -32,6 +32,7 @@ export class SessionHub {
     this.busy = null;
     this.note = '';
     this.ready = false;
+    this.emptyLogged = false;
   }
 
   get enabled() { return this.prefs?.sessions !== false; }
@@ -73,6 +74,12 @@ export class SessionHub {
         id: String(w.id), title: String(w.title ?? ''), path: String(w.path ?? ''),
         members: new Set((Array.from(w.sessionIds ?? [])).map(String))
       }));
+      // 启动时插件可能比工作区注册表先就绪：这一轮读到空表就保留原状态，下一轮再试，别把恢复的选择清掉。
+      if (!workspaces.length) {
+        if (!this.emptyLogged) { this.emptyLogged = true; this.log('workspaces empty, will retry'); }
+        return;
+      }
+      this.emptyLogged = false;
       this.workspaces = workspaces;
       if (!this.workspaceId || !workspaces.some(w => w.id === this.workspaceId)) this.workspaceId = workspaces[0]?.id ?? null;
       const listed = controller?.list ? await controller.list({}, AbortSignal.timeout(15000)) : null;

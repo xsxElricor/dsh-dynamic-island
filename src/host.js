@@ -153,6 +153,8 @@ export function apply(ctx, config = {}) {
       }
     });
     hub.refresh(true);
+    // 工作区注册表可能比插件晚一点就绪，启动后 4 秒补一次，避免顶部会话栏空等 20 秒。
+    const hubBoot = setTimeout(() => hub.refresh(true).then(() => publish()), 4000); hubBoot.unref?.();
     const hubTimer = setInterval(() => hub.refresh().then(() => publish()), 20000); hubTimer.unref?.();
     // Settings edited in Harness arrive as volatile updates; forward them without restarting the window.
     let balanceAt = 0, balanceBusy = false;
@@ -195,6 +197,6 @@ export function apply(ctx, config = {}) {
     } catch(error) { ctx.logger.warn(error.message); }
     const timer=setInterval(publish,1000); timer.unref();
     const balanceTimer=setInterval(() => refreshBalance(true), 10 * 60000); balanceTimer.unref();
-    return () => { stopped=true; detach(); offDesk?.(); offApprovals?.(); offLedger?.(); backfillAbort.abort(); clearTimeout(backfillFirst); clearInterval(backfillTimer); ledger.save(); offSettings?.(); clearInterval(timer); clearInterval(balanceTimer); clearInterval(hubTimer); clearTimeout(pending); if(child?.connected)child.send({type:'shutdown'}); setTimeout(()=>{if(child?.exitCode===null)child.kill();},1500).unref(); };
+    return () => { stopped=true; detach(); offDesk?.(); offApprovals?.(); offLedger?.(); backfillAbort.abort(); clearTimeout(backfillFirst); clearInterval(backfillTimer); ledger.save(); offSettings?.(); clearInterval(timer); clearInterval(balanceTimer); clearInterval(hubTimer); clearTimeout(hubBoot); clearTimeout(pending); if(child?.connected)child.send({type:'shutdown'}); setTimeout(()=>{if(child?.exitCode===null)child.kill();},1500).unref(); };
   });
 }
