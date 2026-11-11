@@ -1,6 +1,6 @@
 // 工作区与会话中枢：为灵动岛提供「切换工作区 / 选择已有对话 / 新聊天」。
 // 只读取 Harness 自己的注册表与控制器：workspaceRegistry、sessionController、sessionQuery。
-import { mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, renameSync, writeFileSync, appendFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 
 const MAX_ROWS = 40;
@@ -18,6 +18,7 @@ export class SessionHub {
     this.seed = seed;
     this.prefs = prefs;
     this.file = join(dataDir, 'hub.json');
+    this.logFile = join(dataDir, 'hub.log');
     const saved = readJson(this.file) ?? {};
     this.workspaceId = typeof saved.workspaceId === 'string' ? saved.workspaceId : null;
     this.sessionId = typeof saved.sessionId === 'string' ? saved.sessionId : null;
@@ -33,6 +34,14 @@ export class SessionHub {
   }
 
   get enabled() { return this.prefs?.sessions !== false; }
+
+  log(...parts) {
+    if (process.env.DSH_ISLAND_DEBUG === '0') return;
+    try {
+      mkdirSync(dirname(this.logFile), { recursive: true });
+      appendFileSync(this.logFile, `${new Date().toISOString()} ${parts.map(p => typeof p === 'string' ? p : JSON.stringify(p)).join(' ')}\n`);
+    } catch {}
+  }
 
   workspace() { return this.workspaces.find(w => w.id === this.workspaceId) ?? null; }
 
@@ -82,8 +91,10 @@ export class SessionHub {
       this.at = Date.now();
       this.version += 1;
       this.#rows();
+      if (this.version === 1) this.log('refresh', { workspaces: this.workspaces.length, summaries: this.summaries.length, rows: this.rows.length, names: this.titles.size });
     } catch (error) {
       this.note = `会话列表暂时读不到：${error?.message ?? error}`;
+      this.log('refresh failed', String(error?.stack ?? error));
     }
   }
 
@@ -131,22 +142,24 @@ export class SessionHub {
 
   async selectWorkspace(id) {
     const value = String(id ?? '');
-    if (!this.workspaces.some(w => w.id === value)) return { ok: false, reason: '找不到这个工作区' };
+    if (!this.workspaces.some(w => w.id === value)) { this.log('workspace rejected', value); return { ok: false, reason: '找不到这个工作区' }; }
     this.workspaceId = value;
     this.#save();
     await this.refresh(true);
+    this.log('workspace', { id: value, rows: this.rows.length });
     this.publish?.();
     return { ok: true, workspaceId: value };
   }
 
   async focus(sessionId) {
     const id = String(sessionId ?? '');
-    if (!this.summaries.some(s => s.id === id)) return { ok: false, reason: '找不到这个对话，可能已归档' };
+    if (!this.summaries.some(s => s.id === id)) { this.log('focus rejected', id, this.summaries.length); return { ok: false, reason: '找不到这个对话，可能已归档' }; }
     this.sessionId = id;
     const owner = this.workspaces.find(w => w.members.has(id) || (w.path && normalize(w.path) === normalize(this.summaries.find(s => s.id === id)?.cwd)));
     if (owner) this.workspaceId = owner.id;
     this.#save();
     this.seed?.(id, { title: this.titleOf(id), running: this.runningOf(id) });
+    this.log('focus', { id, workspace: this.workspaceId });
     this.publish?.();
     return { ok: true, sessionId: id };
   }
@@ -156,6 +169,7 @@ export class SessionHub {
     if (this.preset !== undefined) return this.preset;
     try {
       const roster = await this.ctx.get?.('agentPresets')?.list?.() ?? [];
+      this.log('presets', roster.map(p => `${p.id}:${p.name ?? ''}`).join(','));
       const hit = roster.find(p => String(p.id) === 'standard') ?? roster.find(p => /标准/.test(String(p.name ?? '')));
       this.preset = hit?.id ?? null;
     } catch { this.preset = null; }
@@ -164,22 +178,24 @@ export class SessionHub {
 
   async create() {
     const controller = this.ctx.get?.('sessionController');
-    if (typeof controller?.create !== 'function') return { ok: false, reason: '当前 Harness 版本不支持新建会话' };
+    if (typeof controller?.create !== 'function') { this.log('create unavailable', Boolean(controller)); return { ok: false, reason: '当前 Harness 版本不支持新建会话' }; }
     const ws = this.workspace();
     const preset = await this.standardPreset();
     let value;
     try {
       value = await controller.create({ ...(ws ? { workspaceId: ws.id } : {}), ...(preset ? { agentPreset: preset } : {}) });
     } catch (error) {
+      this.log('create failed', String(error?.stack ?? error));
       if (!ws) return { ok: false, reason: error?.message ?? '新建失败' };
       try { value = await controller.create({ cwd: ws.path, ...(preset ? { agentPreset: preset } : {}) }); }
-      catch { return { ok: false, reason: error?.message ?? '新建失败' }; }
+      catch (error2) { this.log('create retry failed', String(error2?.stack ?? error2)); return { ok: false, reason: error2?.message ?? error?.message ?? '新建失败' }; }
     }
     const id = String(value?.sessionId ?? '');
-    if (!id) return { ok: false, reason: 'Harness 没有返回新会话' };
+    if (!id) { this.log('create empty', value); return { ok: false, reason: 'Harness 没有返回新会话' }; }
     this.sessionId = id;
     this.#save();
     this.seed?.(id, { title: BLANK_TITLE, running: false });
+    this.log('create', { id, preset: value?.agentPreset ?? preset, workspace: this.workspaceId });
     await this.refresh(true);
     this.publish?.();
     return { ok: true, sessionId: id };
