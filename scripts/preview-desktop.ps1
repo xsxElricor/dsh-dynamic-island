@@ -1,4 +1,4 @@
-$ErrorActionPreference='Stop'
+﻿$ErrorActionPreference='Stop'
 try {
   $islandRoot=(Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..')).Path
   $islandNode=(Get-Command node.exe -ErrorAction Stop).Source
