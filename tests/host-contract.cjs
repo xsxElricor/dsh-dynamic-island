@@ -3,7 +3,7 @@ const {createRequire}=require('node:module');
 const path=require('node:path');
 const {pathToFileURL}=require('node:url');
 async function main(){
-  const req=createRequire(process.env.DSH_HOST_PACKAGE||'D:/deepseek harness/resources/app.asar/dsh/package.json');
+  const req=createRequire(process.env.DSH_HOST_PACKAGE||'D:/Arti-Intel/DSH/resources/app.asar/dsh/package.json');
   const manifest=require('../package.json');
   const {evaluatePluginCompatibility}=req('@deepseek-ai/dsh-app-boot');
   assert.equal(req('./package.json').version,manifest.peerDependencies['@deepseek-ai/dsh']);

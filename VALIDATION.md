@@ -1,5 +1,11 @@
 # 验证记录
 
+2026-11-18，Windows，DeepSeek Harness Desktop 0.2.2-rc.3（Electron 44.7.0，schemastery 3.19.0）。
+
+- 插件 0.1.2：`peerDependencies` 更新为 `@deepseek-ai/dsh 0.2.2-rc.3`、`@deepseek-ai/schemastery ~3.19.0`，并补 `engines.dsh ^0.2.2-rc.3`；`evaluatePluginCompatibility` 通过。
+- 实际安装版 Harness 的兼容门禁与真实 Cordis 事件派发通过（`npm run test:host`，宿主路径 `D:\Arti-Intel\DSH`）。
+- 插件已在 Harness 0.2.2-rc.3 中重新启用：`include:dsh-dynamic-island` 为 active，灵动岛窗口正常刷新 hub 与余额。
+
 2026-10-25，Windows，DeepSeek Harness Desktop 0.2.1-rc.3，现有 Electron 44.0.0。
 
 - 8 项状态与位置测试通过：多任务优先级、并行工具、多个确认、超时提问、取消与错误、状态到期、负坐标显示器和圆角点击区域。

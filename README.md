@@ -37,7 +37,7 @@ DeepSeek Harness 的桌面灵动岛插件：像 iPhone 灵动岛一样停在屏�
 
 ## 安装
 
-需要 **DeepSeek Harness 桌面版 0.2.2-rc.1**（Windows）。
+需要 **DeepSeek Harness 桌面版 0.2.2-rc.3**（Windows）。
 
 本插件目前通过 GitHub 发布（暂未发布到 npm）：
 
@@ -48,8 +48,8 @@ DeepSeek Harness 的桌面灵动岛插件：像 iPhone 灵动岛一样停在屏�
   powershell -NoProfile -ExecutionPolicy Bypass -File scripts/install-harness.ps1
   ```
 
-  脚本会在 `artifacts/` 下生成 `dsh-dynamic-island-0.1.1.tgz`，再用 Harness 随附的 `dsh plugin --profile desktop add` 安装。
-- **已打包的 tgz**：也可以直接运行 `dsh plugin --profile desktop add artifacts\dsh-dynamic-island-0.1.1.tgz`。
+  脚本会在 `artifacts/` 下生成 `dsh-dynamic-island-0.1.2.tgz`，再用 Harness 随附的 `dsh plugin --profile desktop add` 安装。
+- **已打包的 tgz**：也可以直接运行 `dsh plugin --profile desktop add artifacts\dsh-dynamic-island-0.1.2.tgz`。
 
 装好后，位置、大小等选项在 Harness 的「设置 › 灵动岛」中调整。
 
@@ -177,7 +177,7 @@ Agent 要执行需要授权的操作（运行命令、修改文件、访问网�
 
 ## 从源码安装与卸载
 
-适配并检查的版本：**DeepSeek Harness Desktop 0.2.2-rc.1 / Windows**。
+适配并检查的版本：**DeepSeek Harness Desktop 0.2.2-rc.3 / Windows**。
 
 双击项目里的 **安装到 Harness.cmd** 即可（会先询问是否关闭 Harness，装完自动重新打开；会在常见安装位置和正在运行的 Harness 中查找 `dsh.cmd`）。也可以先从托盘退出 Harness，然后运行：
 
